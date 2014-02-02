@@ -3,7 +3,9 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.1
+Version: 1.0.2
+
+
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -55,6 +57,9 @@ class formatting_correcter extends pluginSedLex {
 		add_action( "wp_ajax_replaceWithProposedModifications_FR",  array($this,"replaceWithProposedModifications_FR")) ; 
 		add_action( "wp_ajax_resetFormattingIssue",  array($this,"resetFormattingIssue")) ; 
 		add_action( "wp_ajax_viewFormattingIssue",  array($this,"viewFormattingIssue")) ; 
+		add_action( "wp_ajax_showEditorModif",  array($this,"showEditor")) ; 
+		add_action( "wp_ajax_saveEditorModif",  array($this,"saveEditor")) ; 
+		add_action( "wp_ajax_cancelEditorModif",  array($this,"cancelEditor")) ; 
 
 		add_action( 'wp_ajax_nopriv_checkIfFormattingCorrecterNeeded', array( $this, 'checkIfFormattingCorrecterNeeded'));
 		add_action( 'wp_ajax_checkIfFormattingCorrecterNeeded', array( $this, 'checkIfFormattingCorrecterNeeded'));
@@ -262,9 +267,11 @@ class formatting_correcter extends pluginSedLex {
 			case 'type_page' 		: return "page,post" 		; break ; 
 			case 'remove_double_space' 		: return true			; break ; 
 			case 'remove_incorrect_quote' 		: return true			; break ; 
+			case 'remove_div' 		: return false			; break ; 
 			case 'french_punctuations' 		: return false			; break ; 
 			case 'regex_error' 		: return ""			; break ; 
 			case 'regex_correct' 		: return ""				; break ; 
+			case 'avoid_multiple_revisions' : return true			; break ; 
 			
 			case 'last_request' : return 0 ; break ; 
 			case 'between_two_requests' : return 2 ; break ; 
@@ -533,7 +540,8 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_comment(sprintf(__('Replace %s with %s and %s with %s.',  $this->pluginID), "<code>&#171;, &#187;, &#8220;, &#8221;, &#8222;</code>", "<code>&quot;</code>", "<code>&#96;,&#180;, &#8216;, &#8217;, &#8218;</code>", "<code>&#39;</code>")) ; 
 				$params->add_param('french_punctuations', __('French punctuation marks:',  $this->pluginID)) ; 
 				$params->add_comment(sprintf(__('For instance there is unbreakable space before the following double punctuation marks %s.',  $this->pluginID), "<code>!?:;%</code>")) ; 
-				
+				$params->add_param('remove_div', __('HTML code in your text:',  $this->pluginID)) ; 
+				$params->add_comment(sprintf(__('This option remove the %s tag in the text.',  $this->pluginID), "<code>&lt;div&gt;,&lt;dl&gt;,&lt;dd&gt;,&lt;dt&gt;</code>")) ; 
 				
 				$params->add_title_macroblock(__('Custom issues %s',  $this->pluginID), __('Add a new custom regexp for a custom issue',  $this->pluginID)) ; 
 				$params->add_param('regex_error', __('Custom regexp to detect a formatting issue:',  $this->pluginID)) ; 
@@ -544,6 +552,7 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_title(__('Advanced parameter',  $this->pluginID)) ; 
 				$params->add_param('between_two_requests', __('Minimum interval bewteen two checks (in minutes):',  $this->pluginID)) ; 
 				$params->add_param('type_page', __('Types of page/post to be checked:',  $this->pluginID)) ; 
+				//$params->add_param('avoid_multiple_revisions', __('Avoid creating a revision for each single modifications you validate:',  $this->pluginID)) ; 
 
 				$params->flush() ; 
 				
@@ -626,17 +635,25 @@ class formatting_correcter extends pluginSedLex {
 	
 		$regexp_norm = array() ; 
 		if ($this->get_param('remove_double_space')) {
-			$regexp_norm[] = array('found'=>"( |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"^[ \t]+",'replace'=>"", 'message'=>__("Remove this leading space?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"( |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_incorrect_quote')) {
-			$regexp_norm[] = array('found'=>"(«|»|“|”|„|&#171;|&#187;|&#8220;|&#8221;|&#8222;)", 'replace'=>'"', 'message'=>__("Replace this double non-standard quote", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"(`|´|‘|’|‚|&#96;|&#180;|&#8216;|&#8217;|&#8218;)", 'replace'=>"'", 'message'=>__("Replace this single non-standard quote", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(«|»|“|”|„|&#171;|&#187;|&#8220;|&#8221;|&#8222;)", 'replace'=>'"', 'message'=>__("Replace this double non-standard quote?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(`|´|‘|’|‚|&#96;|&#180;|&#8216;|&#8217;|&#8218;)", 'replace'=>"'", 'message'=>__("Replace this single non-standard quote?", $this->pluginID))  ; 
+		}
+		
+		if ($this->get_param('remove_div')) {
+			$regexp_norm[] = array('found'=>"<\/?div[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"<\/?dl[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"<\/?dt[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"<\/?dd[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('french_punctuations')) {
-			$regexp_norm[] = array('found'=>" ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'&nbsp;###1###', 'message'=>__("Replace the breakable space by a non-breakable one.", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"([^&]{6})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word.", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>" ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'&nbsp;###1###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^&]{6})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
 		}
 		
 		$regexp_found = $this->get_param_macro('regex_error') ; 
@@ -695,7 +712,7 @@ class formatting_correcter extends pluginSedLex {
 		
 		ob_start() ; 
 		
-			echo "<p>".__("Click on formatting issue to validate the replacement.", $this->pluginID)."</p>" ;
+			echo "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
 
 			echo "<div id='proposed_modifications'>" ; 
 			echo "<div id='wait_proposed_modifications' style='display: none;'>" ; 
@@ -704,9 +721,18 @@ class formatting_correcter extends pluginSedLex {
 			echo "<div id='text_with_proposed_modifications'>" ; 
 		
 			echo "<code>".$this->display_split_regexp($result, $id)."</code>" ;
+
+			echo "<p>&nbsp;</p>" ; 
+			echo "<div>" ; 
+			echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+			echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+			echo "</div>" ; 
+			echo "<p>&nbsp;</p>" ; 
 		
 			echo "</div>" ; 
+			
 			echo "</div>" ; 
+			
 		$content = ob_get_clean() ; 
 		$popup = new popupAdmin (sprintf(__("View the formatting issue for %s", $this->pluginID),"<i>'".get_the_title($id)."'</i>"), $content, "", "window.location.href=window.location.href;") ; 
 		echo $popup->render() ; 
@@ -726,12 +752,12 @@ class formatting_correcter extends pluginSedLex {
 			die() ; 
 		} 
 		$num = $_POST['num'] ; 
-		if (!is_numeric($num)) {
+		if ((!is_numeric($num))&&($num!="ALL")) {
 			echo "Go away: NUM is not an integer" ; 
 			die() ; 
 		} 
 		$pos = $_POST['pos'] ; 
-		if (!is_numeric($pos)) {
+		if ((!is_numeric($pos))&&($pos!="ALL")) {
 			echo "Go away: POS is not an integer" ; 
 			die() ; 
 		} 
@@ -769,8 +795,8 @@ class formatting_correcter extends pluginSedLex {
 				$new_string .= $r['text'] ; 
 			}
 			if ($r['status']!="NORMAL") {
-				if ($numVerif == $num) {
-					if ($r['pos']==$pos) {
+				if (($numVerif == $num)||($num=="ALL")) {
+					if (($r['pos']==$pos)||($pos=="ALL")) {
 						$new_string .=  $r['new_text'] ; 
 					} else {
 						echo sprintf(__('ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character.',$this->pluginID), $num, $pos, $r['pos']) ; 
@@ -785,9 +811,18 @@ class formatting_correcter extends pluginSedLex {
 		}
 		if ($new_string != "") {
 			$post_temp[0]->post_content = $new_string ; 
+			
+			if ($this->get_param("avoid_multiple_revisions")) {
+			//	remove_action('pre_post_update', 'wp_save_post_revision');
+			}
+			
 			remove_action('save_post', array($this, 'whenPostIsSaved'));
 			wp_update_post( $post_temp[0] );
 			add_action('save_post', array($this, 'whenPostIsSaved'));
+			
+			if ($this->get_param("avoid_multiple_revisions")) {
+			//	add_action('pre_post_update', 'wp_save_post_revision');
+			}
 		}
 		
 		$result = $this->split_regexp($new_string, $array_regexp) ;
@@ -796,6 +831,169 @@ class formatting_correcter extends pluginSedLex {
 		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."' WHERE id_post='".$id."'") ; 		
 
 		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
+		
+		echo "<p>&nbsp;</p>" ; 
+		echo "<div>" ; 
+		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+		echo "</div>" ; 
+		echo "<p>&nbsp;</p>" ; 
+		
+		die() ; 
+	}
+	
+	/** ====================================================================================================================================================
+	* Ajax Callback to replace issues
+	* @return void
+	*/
+	function showEditor() {
+		global $post, $wpdb ; 
+		$id = $_POST['id'] ; 
+		if (!is_numeric($id)) {
+			echo "Go away: ID is not an integer" ; 
+			die() ; 
+		}
+		
+		// We get the post 
+		$args = array(
+				'p'=>$id,
+				'post_type' => 'any'
+		) ; 
+		
+		$myQuery = new WP_Query( $args ); 
+
+		//Looping through the posts
+		$post_temp = array() ; 
+		while ( $myQuery->have_posts() ) {
+			$myQuery->the_post();
+			$post_temp[] = $post;
+		}
+
+		// Reset Post Data
+		wp_reset_postdata();
+
+		$text = $post_temp[0]->post_content ; 
+		
+		echo "<textarea id='editor_textarea' style='width:90%;height: 150px;'>".htmlentities($text, ENT_COMPAT , 'UTF-8')."</textarea>" ; 
+		
+		echo "<p>&nbsp;</p>" ; 
+		echo "<div>" ; 
+		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Save", $this->pluginID))."' type='button' onclick='saveEditor(".$id.")'>" ; 
+		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Cancel", $this->pluginID))."' type='button' onclick='cancelEditor(".$id.")'>" ; 
+		echo "</div>" ;
+		echo "<p>&nbsp;</p>" ;  
+		
+		die() ; 
+	}
+	
+	/** ====================================================================================================================================================
+	* Ajax Callback to reset formatting issue
+	* @return void
+	*/
+	function cancelEditor() {
+		global $post, $wpdb ; 
+		$id = $_POST['id'] ; 
+		if (!is_numeric($id)) {
+			echo "Go away: ID is not an integer" ; 
+			die() ; 
+		} 
+		
+		// We get the post 
+		$args = array(
+				'p'=>$id,
+				'post_type' => 'any'
+		) ; 
+		
+		$myQuery = new WP_Query( $args ); 
+
+		//Looping through the posts
+		$post_temp = array() ; 
+		while ( $myQuery->have_posts() ) {
+			$myQuery->the_post();
+			$post_temp[] = $post;
+		}
+
+		// Reset Post Data
+		wp_reset_postdata();
+
+		$text = $post_temp[0]->post_content ; 
+								
+		$array_regexp = $this->get_regexp() ; 
+		
+		$result = $this->split_regexp($text, $array_regexp) ;
+		
+		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
+		
+		echo "<p>&nbsp;</p>" ; 
+		echo "<div>" ; 
+		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+		echo "</div>" ; 
+		echo "<p>&nbsp;</p>" ; 
+		
+		die() ; 
+	}
+	
+	/** ====================================================================================================================================================
+	* Ajax Callback to reset formatting issue
+	* @return void
+	*/
+	
+	function saveEditor() {
+		
+		global $post, $wpdb ; 
+		$id = $_POST['id'] ; 
+		if (!is_numeric($id)) {
+			echo "Go away: ID is not an integer" ; 
+			die() ; 
+		} 
+		//$text = html_entity_decode(stripslashes($_POST['text']), ENT_COMPAT, 'UTF-8') ; 
+		$text = stripslashes($_POST['text']) ; 
+		
+		// We get the post 
+		$args = array(
+				'p'=>$id,
+				'post_type' => 'any'
+		) ; 
+		
+		$myQuery = new WP_Query( $args ); 
+
+		//Looping through the posts
+		$post_temp = array() ; 
+		while ( $myQuery->have_posts() ) {
+			$myQuery->the_post();
+			$post_temp[] = $post;
+		}
+
+		// Reset Post Data
+		wp_reset_postdata();
+		
+		$array_regexp = $this->get_regexp() ; 
+		
+		// Save
+		$post_temp[0]->post_content = $text ; 
+		remove_action('save_post', array($this, 'whenPostIsSaved'));
+		wp_update_post( $post_temp[0] );
+		add_action('save_post', array($this, 'whenPostIsSaved'));
+		
+		//$result = $this->split_regexp($text, $array_regexp) ;
+		//echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
+		//echo "</p>####</p>" ; 
+
+		
+		$result = $this->split_regexp($post_temp[0]->post_content, $array_regexp) ;
+		
+		// We update the database so that the number of error is correct
+		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."' WHERE id_post='".$id."'") ; 		
+
+		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
+		
+		echo "<p>&nbsp;</p>" ; 
+		echo "<div>" ; 
+		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+		echo "</div>" ; 
+		echo "<p>&nbsp;</p>" ; 
 		
 		die() ; 
 	}

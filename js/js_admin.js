@@ -17,6 +17,52 @@ function replaceTextInPost(message, idPost, numSeparator, posToCheck) {
 	}
 }
 
+function validAllIssue(message, idPost) {
+	replaceTextInPost(message, idPost, "ALL", "ALL") ;
+}
+
+function showEditor(idPost) {
+	jQuery('#text_with_proposed_modifications').text('') ;
+	jQuery('#wait_proposed_modifications').show() ;
+	var arguments = {
+		action: 'showEditorModif', 
+		id:idPost
+	} 
+	jQuery.post(ajaxurl, arguments, function(response) {
+		jQuery('#text_with_proposed_modifications').html(response) ;
+		jQuery('#wait_proposed_modifications').hide() ;
+	});
+}
+
+function cancelEditor(idPost) {
+	jQuery('#text_with_proposed_modifications').text('') ;
+	jQuery('#wait_proposed_modifications').show() ;
+	var arguments = {
+		action: 'cancelEditorModif', 
+		id:idPost
+	} 
+	jQuery.post(ajaxurl, arguments, function(response) {
+		jQuery('#text_with_proposed_modifications').html(response) ;
+		jQuery('#wait_proposed_modifications').hide() ;
+	});
+}
+
+
+function saveEditor(idPost) {
+	textToUpload=jQuery("#editor_textarea").val();
+	jQuery('#text_with_proposed_modifications').text('') ;
+	jQuery('#wait_proposed_modifications').show() ;
+	var arguments = {
+		action: 'saveEditorModif', 
+		text:textToUpload,
+		id:idPost
+	} 
+	jQuery.post(ajaxurl, arguments, function(response) {
+		jQuery('#text_with_proposed_modifications').html(response) ;
+		jQuery('#wait_proposed_modifications').hide() ;
+	});
+}
+
 function viewFormattingIssue(idPost) {
 	var arguments = {
 		action: 'viewFormattingIssue', 

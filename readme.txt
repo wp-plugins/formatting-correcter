@@ -52,10 +52,16 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.2 = 
+* NEW : improve the leading space removal
+* NEW : you may delete the DIV tag in the text of posts
+* NEW : you may now approve all propositions at the same time
+* NEW : you may edit manually the text if their is an issue
+
 = 1.0.1 = 
 * First release on the WP directory
 
 == Frequently Asked Questions ==
 
  
-InfoVersion:d32f59a5862edf1ac0360555995b313c
+InfoVersion:d22fc559d7d18fc28241da1cdfe29d33
