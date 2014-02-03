@@ -52,6 +52,11 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.3 = 
+* NEW : Three dots may be change into ellipses
+* NEW : A force analysis of all articles are available
+* NEW : Space may be removed from inside HTML tag
+
 = 1.0.2 = 
 * NEW : improve the leading space removal
 * NEW : you may delete the DIV tag in the text of posts
@@ -64,4 +69,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:d22fc559d7d18fc28241da1cdfe29d33
+InfoVersion:ebf780a65a050bb0b2f9c0ef39947e3d

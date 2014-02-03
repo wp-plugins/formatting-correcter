@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.2
+Version: 1.0.3
 
 
 Framework: SL_Framework
@@ -60,6 +60,9 @@ class formatting_correcter extends pluginSedLex {
 		add_action( "wp_ajax_showEditorModif",  array($this,"showEditor")) ; 
 		add_action( "wp_ajax_saveEditorModif",  array($this,"saveEditor")) ; 
 		add_action( "wp_ajax_cancelEditorModif",  array($this,"cancelEditor")) ; 
+
+		add_action( "wp_ajax_stopAnalysisFormatting",  array($this,"stopAnalysisFormatting")) ; 
+		add_action( "wp_ajax_forceAnalysisFormatting",  array($this,"forceAnalysisFormatting")) ; 
 
 		add_action( 'wp_ajax_nopriv_checkIfFormattingCorrecterNeeded', array( $this, 'checkIfFormattingCorrecterNeeded'));
 		add_action( 'wp_ajax_checkIfFormattingCorrecterNeeded', array( $this, 'checkIfFormattingCorrecterNeeded'));
@@ -129,6 +132,22 @@ class formatting_correcter extends pluginSedLex {
 	*/
 	 
 	public function _notify() {
+		global $wpdb ; 
+		if ($this->get_param('show_nb')) {
+			$res = $wpdb->get_results("SELECT numerror FROM ".$this->table_name) ;
+			$numerror = 0 ; 
+			foreach ( $res as $r ) {
+				if ($this->get_param('show_nb_error')) {
+					$numerror += $r->numerror;
+				} else {
+					if ($r->numerror>0) {
+						$numerror += 1 ;
+					}
+				}
+			}
+			return $numerror ; 
+
+		}
 		return 0 ; 
 	}
 	
@@ -266,12 +285,24 @@ class formatting_correcter extends pluginSedLex {
 		switch ($option) {
 			case 'type_page' 		: return "page,post" 		; break ; 
 			case 'remove_double_space' 		: return true			; break ; 
+			case 'space_after_before_html': return false			; break ; 
 			case 'remove_incorrect_quote' 		: return true			; break ; 
 			case 'remove_div' 		: return false			; break ; 
 			case 'french_punctuations' 		: return false			; break ; 
 			case 'regex_error' 		: return ""			; break ; 
 			case 'regex_correct' 		: return ""				; break ; 
 			case 'avoid_multiple_revisions' : return true			; break ; 
+			case 'show_nb' : return true			; break ; 
+			case 'show_nb_error' : return true			; break ; 
+			case 'change_ellipses' : return false			; break ; 
+			
+			
+			case 'list_post_id_to_check': return array()			; break ; 
+			case 'nb_post_to_check'  : return 0 ; break ; 
+			
+			case 'max_page_to_check'  : return 200 ; break ; 
+			
+			
 			
 			case 'last_request' : return 0 ; break ; 
 			case 'between_two_requests' : return 2 ; break ; 
@@ -467,67 +498,18 @@ class formatting_correcter extends pluginSedLex {
 			ob_start() ; 
 				
 				echo "<div id='viewFormattingIssue_edit'></div>"  ; 
-			
-				$maxnb = 20 ; 
-				$table = new adminTable(0, $maxnb, true, true) ; 
 				
-				$paged=1 ; 
+				echo "<div id='table_formatting'>"  ; 
+				$this->displayTable() ;
+				echo "</div>" ; 
 				
-				$result = array() ; 
-				
-				// on construit le filtre pour la requete
-				$filter = explode(" ", $table->current_filter()) ; 
-				
-				$res = $wpdb->get_results("SELECT id_post, date_check, numerror FROM ".$this->table_name." ORDER BY numerror") ;
-				foreach ( $res as $r ) {
-					if ($r->numerror!=0) {
-						$match = true ; 
-						$title = get_the_title($r->id_post) ;  
-						foreach ($filter as $fi) {
-							if ($fi!="") {
-								if (strpos(strtolower($title), strtolower($fi))===FALSE) {
-									$match = false ; 
-									break ; 
-								}
-							}
-						}
-						if ($match) {
-							$result[] = array($r->id_post, $title, $r->numerror, $r->date_check) ; 
-						}
-					}
-				}
-				
-				$count = count($result);
-				$table->set_nb_all_Items($count) ; 
-
-				$table->title(array(__('Title of your articles', $this->pluginID), __('Num of formatting issues', $this->pluginID), __('Date of verification', $this->pluginID))) ; 
-
-				// We order the posts page according to the choice of the user
-				if ($table->current_orderdir()=="ASC") {
-					$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), true) ;  
-				} else { 
-					$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), false) ;  
-				}
-				
-				// We limit the result to the requested zone
-				$result = array_slice($result,($table->current_page()-1)*$maxnb,$maxnb);
-				
-				// lignes du tableau
-				// boucle sur les differents elements
-				$ligne = 0 ; 
-				foreach ($result as $r) {
-					$ligne++ ; 
-					$cel1 = new adminCell("<p><b>".$r[1]."</b></p>") ; 	
-					$cel1->add_action(__("View formatting issues", $this->pluginID), "viewFormattingIssue") ; 
-					$cel1->add_action(__("Reset", $this->pluginID), "resetFormattingIssue") ; 
-					$cel2 = new adminCell("<p>".$r[2]."</p>") ; 	
-					
-					$cel3 = new adminCell($r[3]) ; 
-					
-					
-					$table->add_line(array($cel1, $cel2, $cel3), $r[0]) ; 
-				}
-				echo $table->flush() ;
+				echo "<p>" ; 
+				echo "<img id='wait_analysis' src='".WP_PLUGIN_URL."/".str_replace(basename(__FILE__),"",plugin_basename( __FILE__))."core/img/ajax-loader.gif' style='display: none;'>" ; 
+				echo "<input type='button' id='forceAnalysis' class='button-primary validButton' onClick='forceAnalysis()'  value='". __('Force analysis',$this->pluginID)."' />" ; 
+				echo "<script>jQuery('#forceAnalysis').removeAttr('disabled');</script>" ; 
+				echo " <input type='button' id='stopAnalysis' class='button validButton' onClick='stopAnalysis()'  value='". __('Stop analysis',$this->pluginID)."' />" ; 
+				echo "<script>jQuery('#stopAnalysis').attr('disabled', 'disabled');</script>" ; 
+				echo "</p>" ; 
 				
 			$tabs->add_tab(__('Formatting Issues',  $this->pluginID), ob_get_clean()) ; 	
 
@@ -542,6 +524,9 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_comment(sprintf(__('For instance there is unbreakable space before the following double punctuation marks %s.',  $this->pluginID), "<code>!?:;%</code>")) ; 
 				$params->add_param('remove_div', __('HTML code in your text:',  $this->pluginID)) ; 
 				$params->add_comment(sprintf(__('This option remove the %s tag in the text.',  $this->pluginID), "<code>&lt;div&gt;,&lt;dl&gt;,&lt;dd&gt;,&lt;dt&gt;</code>")) ; 
+				$params->add_param('space_after_before_html', __('Move space when inside HTML tag:',  $this->pluginID)) ; 
+				$params->add_comment(__('This option move space just after opening tag out and move space just before closing tag out.',  $this->pluginID)) ; 
+				$params->add_param('change_ellipses', __('Transform three successive points into ellipses:',  $this->pluginID)) ; 
 				
 				$params->add_title_macroblock(__('Custom issues %s',  $this->pluginID), __('Add a new custom regexp for a custom issue',  $this->pluginID)) ; 
 				$params->add_param('regex_error', __('Custom regexp to detect a formatting issue:',  $this->pluginID)) ; 
@@ -552,6 +537,10 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_title(__('Advanced parameter',  $this->pluginID)) ; 
 				$params->add_param('between_two_requests', __('Minimum interval bewteen two checks (in minutes):',  $this->pluginID)) ; 
 				$params->add_param('type_page', __('Types of page/post to be checked:',  $this->pluginID)) ; 
+				$params->add_param('show_nb', __('Display the number of issues in the left column:',  $this->pluginID),"","",array('show_nb_error')) ; 
+				$params->add_param('show_nb_error', __('If this is checked, display the total number of issues, if not, display only the number of posts with at least one issue:',  $this->pluginID)) ; 
+				$params->add_param('max_page_to_check', __('When forced, how many posts is to be checked?',  $this->pluginID)) ; 
+				
 				//$params->add_param('avoid_multiple_revisions', __('Avoid creating a revision for each single modifications you validate:',  $this->pluginID)) ; 
 
 				$params->flush() ; 
@@ -634,6 +623,12 @@ class formatting_correcter extends pluginSedLex {
 	function get_regexp() {
 	
 		$regexp_norm = array() ; 
+		
+		
+		if ($this->get_param('change_ellipses')) {
+			$regexp_norm[] = array('found'=>"[.]{3,}", 'replace'=>'&hellip;', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
+		}
+		
 		if ($this->get_param('remove_double_space')) {
 			$regexp_norm[] = array('found'=>"^[ \t]+",'replace'=>"", 'message'=>__("Remove this leading space?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"( |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space?", $this->pluginID))  ; 
@@ -644,6 +639,12 @@ class formatting_correcter extends pluginSedLex {
 			$regexp_norm[] = array('found'=>"(`|´|‘|’|‚|&#96;|&#180;|&#8216;|&#8217;|&#8218;)", 'replace'=>"'", 'message'=>__("Replace this single non-standard quote?", $this->pluginID))  ; 
 		}
 		
+		if ($this->get_param('space_after_before_html')) {
+			$regexp_norm[] = array('found'=>"(<\w[^>]*>)( |&nbsp;)", 'replace'=>' ###1###', 'message'=>__("Move the space before the opening HTML tag?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"( |&nbsp;)(<\/\w[^>]*>)", 'replace'=>'###2### ', 'message'=>__("Move the space after the closing HTML tag?", $this->pluginID))  ; 
+		}
+
+		
 		if ($this->get_param('remove_div')) {
 			$regexp_norm[] = array('found'=>"<\/?div[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"<\/?dl[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
@@ -653,7 +654,7 @@ class formatting_correcter extends pluginSedLex {
 		
 		if ($this->get_param('french_punctuations')) {
 			$regexp_norm[] = array('found'=>" ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'&nbsp;###1###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"([^&]{6})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^&]{6}[^&!?:;,.%])([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
 		}
 		
 		$regexp_found = $this->get_param_macro('regex_error') ; 
@@ -828,7 +829,7 @@ class formatting_correcter extends pluginSedLex {
 		$result = $this->split_regexp($new_string, $array_regexp) ;
 		
 		// We update the database so that the number of error is correct
-		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."' WHERE id_post='".$id."'") ; 		
+		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."', date_check=NOW() WHERE id_post='".$id."'") ; 		
 
 		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
 		
@@ -1053,6 +1054,179 @@ class formatting_correcter extends pluginSedLex {
 
 		return $initArray;
 	}
+	
+	
+	
+	/** ====================================================================================================================================================
+	* Ajax Callback to reset formatting issue
+	* @return void
+	*/
+	function forceAnalysisFormatting() {
+		global $post, $wpdb ; 
+		
+		// Initialize the list
+		$at = $this->get_param('list_post_id_to_check') ; 
+		if (empty($at)) {
+			// We get the post 
+			$args = array(
+				'numberposts'     => $this->get_param('max_page_to_check'),
+				'orderby'         => 'rand',
+				'post_type'       => explode(",",$this->get_param('type_page')),
+				'post_status'     => 'publish' );
+		
+			$myQuery = new WP_Query( $args ); 
+
+			//Looping through the posts
+			$post_temp = array() ; 
+			while ( $myQuery->have_posts() ) {
+				$myQuery->the_post();
+				$post_temp[] = $post->ID;
+			}
+
+			// Reset Post Data
+			wp_reset_postdata();
+			$this->set_param('list_post_id_to_check', $post_temp) ; 
+			$this->set_param('nb_post_to_check', count($post_temp)) ; 
+		}
+		
+		// Get the first post of the list
+		$post_temp = $this->get_param('list_post_id_to_check') ; 
+		$pid = array_pop($post_temp) ; 
+		$this->set_param('list_post_id_to_check', $post_temp) ; 
+		
+		$post_to_check = get_post($pid) ; 
+		
+		// We check
+		$text = $post_to_check->post_content ; 						
+		$array_regexp = $this->get_regexp() ; 		
+		
+		// Detect formatting issues
+		$result = $this->split_regexp($text, $array_regexp) ;
+		
+		$res = $wpdb->get_results("SELECT id_post FROM ".$this->table_name." WHERE id_post='".$pid."'") ;
+		if (count($res)==0){
+			$wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$pid."', '".floor((count($result)-1)/2)."', NOW())") ;
+		} else {
+			$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."', date_check=NOW() WHERE id_post='".$pid."'") ; 		
+		}
+		
+		
+		$this->displayTable() ; 	
+		
+		$at = $this->get_param('list_post_id_to_check') ; 
+		if (empty($at)) {
+			$this->set_param('nb_post_to_check', 0) ; 
+		} else {
+			$pc = floor(100*($this->get_param('nb_post_to_check')-count($this->get_param('list_post_id_to_check')))/$this->get_param('nb_post_to_check')) ; 
+			
+			$pb = new progressBarAdmin(500, 20, $pc, "PROGRESS - ".($this->get_param('nb_post_to_check')-count($this->get_param('list_post_id_to_check')))." / ".$this->get_param('nb_post_to_check')) ; 
+			echo "<br>" ; 
+			$pb->flush() ;	
+		}
+		
+		die() ; 
+	}
+	
+	/** ====================================================================================================================================================
+	* Ajax Callback to reset formatting issue
+	* @return void
+	*/
+	function stopAnalysisFormatting() {
+		global $post, $wpdb ; 
+		
+		$this->set_param('list_post_id_to_check', array()) ; 
+		$this->set_param('nb_post_to_check', 0) ; 
+
+		echo "OK" ; 
+		
+		die() ; 
+	}
+	
+	/** ====================================================================================================================================================
+	* Display the table
+	*
+	* @return void
+	*/
+	
+	function displayTable() {
+		global $wpdb, $post ; 
+		$maxnb = 20 ; 
+		$table = new adminTable(0, $maxnb, true, true) ; 
+		
+		$paged=1 ; 
+		
+		$result = array() ; 
+		
+		// on construit le filtre pour la requete
+		$filter = explode(" ", $table->current_filter()) ; 
+		
+		$res = $wpdb->get_results("SELECT id_post, date_check, numerror FROM ".$this->table_name) ;
+		
+		if (count($res)==0) {
+			echo "<p style='font-weight:bold;color:#8F0000;'>".__('No entry is available to be displayed... please wait until the background process find an article with issue(s) or force the analysis of all articles with the below button.', $this->pluginID)."</p>"  ; 
+		}
+		foreach ( $res as $r ) {
+			if ($r->numerror!=0) {
+				$match = true ; 
+				$title = get_the_title($r->id_post) ;  
+				foreach ($filter as $fi) {
+					if ($fi!="") {
+						if (strpos(strtolower($title), strtolower($fi))===FALSE) {
+							$match = false ; 
+							break ; 
+						}
+					}
+				}
+				if ($match) {
+					$result[] = array($r->id_post, $title, $r->numerror, $r->date_check) ; 
+				}
+			}
+		}
+		
+		$count = count($result);
+
+		$table->set_nb_all_Items($count) ; 
+
+		$table->title(array(__('Title of your articles', $this->pluginID), __('Num of formatting issues', $this->pluginID), __('Date of verification', $this->pluginID))) ; 
+
+		// We order the posts page according to the choice of the user
+		if ($table->current_orderdir()=="ASC") {
+			$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), true) ;  
+		} else { 
+			$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), false) ;  
+		}
+		
+		// We limit the result to the requested zone
+		$result = array_slice($result,($table->current_page()-1)*$maxnb,$maxnb);
+		
+		// lignes du tableau
+		// boucle sur les differents elements
+		$ligne = 0 ; 
+		if ($count!=0) {
+			foreach ($result as $r) {
+				$ligne++ ; 
+				$cel1 = new adminCell("<p><b>".$r[1]."</b></p>") ; 	
+				$cel1->add_action(__("View formatting issues", $this->pluginID), "viewFormattingIssue") ; 
+				$cel1->add_action(__("Reset", $this->pluginID), "resetFormattingIssue") ; 
+				$cel1->add_action(__("Accept all modifications", $this->pluginID), "acceptAllModificationProposed") ; 
+				$cel2 = new adminCell("<p>".$r[2]."</p>") ; 	
+			
+				$cel3 = new adminCell($r[3]) ; 
+			
+			
+				$table->add_line(array($cel1, $cel2, $cel3), $r[0]) ; 
+			}
+		} else {
+			$cel1 = new adminCell("<p>".__("Nothing to display for now ...", $this->pluginID)."</p>") ; 	
+			$cel2 = new adminCell("<p></p>") ; 	
+			$cel3 = new adminCell("<p></p>") ; 
+			$table->add_line(array($cel1, $cel2, $cel3), "1") ; 
+		}
+		
+		echo $table->flush() ;
+	}
+
+
 
 
 			

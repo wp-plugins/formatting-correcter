@@ -63,6 +63,42 @@ function saveEditor(idPost) {
 	});
 }
 
+function forceAnalysis() {
+	jQuery('#forceAnalysis').attr('disabled', 'disabled');
+	jQuery('#stopAnalysis').removeAttr('disabled');
+	jQuery('#wait_analysis').show() ;
+	var arguments = {
+		action: 'forceAnalysisFormatting'
+	} 
+	jQuery.post(ajaxurl, arguments, function(response) {
+		if ((""+response+ "").indexOf("PROGRESS - ") !=-1) {
+			if (jQuery('#forceAnalysis').is(":disabled")) {
+				jQuery('#table_formatting').html(response) ;
+				forceAnalysis() ; 
+			}
+		} else {
+			jQuery('#forceAnalysis').removeAttr('disabled');
+			jQuery('#stopAnalysis').attr('disabled', 'disabled');
+			jQuery('#table_formatting').html(response) ;
+			jQuery('#wait_analysis').hide() ;
+		}
+	});
+}
+
+function stopAnalysis() {
+	jQuery('#forceAnalysis').removeAttr('disabled');
+	jQuery('#stopAnalysis').attr('disabled', 'disabled');
+	jQuery('#wait_analysis').hide() ;
+	
+	var arguments = {
+		action: 'stopAnalysisFormatting'
+	} 
+	jQuery.post(ajaxurl, arguments, function(response) {
+		// nothing
+	});
+}
+
+
 function viewFormattingIssue(idPost) {
 	var arguments = {
 		action: 'viewFormattingIssue', 
@@ -105,5 +141,23 @@ function resetFormattingIssue(idPost) {
 			alert("Error "+x.status+": No data retrieved");
 		}
 	});  
+	}
+}
+
+function acceptAllModificationProposed(idPost) {	
+	var r=confirm("Accept all modifications?"); 
+	
+	if (r) {
+		jQuery('#text_with_proposed_modifications').text('') ;
+		jQuery('#wait_proposed_modifications').show() ;
+		var arguments = {
+			action: 'replaceWithProposedModifications_FR', 
+			id:idPost, 
+			num:"ALL", 
+			pos:"ALL"
+		} 
+		jQuery.post(ajaxurl, arguments, function(response) {
+			window.location.href=window.location.href ; 
+		});
 	}
 }
