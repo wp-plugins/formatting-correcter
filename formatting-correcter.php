@@ -3,7 +3,8 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.3
+Version: 1.0.4
+
 
 
 Framework: SL_Framework
@@ -295,6 +296,7 @@ class formatting_correcter extends pluginSedLex {
 			case 'show_nb' : return true			; break ; 
 			case 'show_nb_error' : return true			; break ; 
 			case 'change_ellipses' : return false			; break ; 
+			case 'remove_nbsp' : return false			; break ; 
 			
 			
 			case 'list_post_id_to_check': return array()			; break ; 
@@ -527,6 +529,9 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('space_after_before_html', __('Move space when inside HTML tag:',  $this->pluginID)) ; 
 				$params->add_comment(__('This option move space just after opening tag out and move space just before closing tag out.',  $this->pluginID)) ; 
 				$params->add_param('change_ellipses', __('Transform three successive points into ellipses:',  $this->pluginID)) ; 
+				$params->add_param('remove_nbsp', __('Incorrect non-breaking space according French rules:',  $this->pluginID)) ; 
+				$params->add_comment(__("This option removes non breaking space that are not before punctuation marks.",  $this->pluginID)) ; 
+				
 				
 				$params->add_title_macroblock(__('Custom issues %s',  $this->pluginID), __('Add a new custom regexp for a custom issue',  $this->pluginID)) ; 
 				$params->add_param('regex_error', __('Custom regexp to detect a formatting issue:',  $this->pluginID)) ; 
@@ -626,12 +631,15 @@ class formatting_correcter extends pluginSedLex {
 		
 		
 		if ($this->get_param('change_ellipses')) {
-			$regexp_norm[] = array('found'=>"[.]{3,}", 'replace'=>'&hellip;', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"( |&nbsp;)*[.]{3,}( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_double_space')) {
-			$regexp_norm[] = array('found'=>"^[ \t]+",'replace'=>"", 'message'=>__("Remove this leading space?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"( |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space?", $this->pluginID))  ; 
+		}
+		
+		if ($this->get_param('remove_nbsp')) {
+			$regexp_norm[] = array('found'=>"&nbsp;([^!?:;%])",'replace'=>" ###1###", 'message'=>__("Remove this incorrect non-breaking space?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_incorrect_quote')) {
@@ -1069,18 +1077,22 @@ class formatting_correcter extends pluginSedLex {
 		if (empty($at)) {
 			// We get the post 
 			$args = array(
-				'numberposts'     => $this->get_param('max_page_to_check'),
+				'numberposts'     => intval($this->get_param('max_page_to_check')),
 				'orderby'         => 'rand',
 				'post_type'       => explode(",",$this->get_param('type_page')),
-				'post_status'     => 'publish' );
-		
+				'fields'        => 'ids',
+				'nopaging' 		=> true,
+				'post_status'     => 'publish' 
+			);
+			
 			$myQuery = new WP_Query( $args ); 
+
 
 			//Looping through the posts
 			$post_temp = array() ; 
 			while ( $myQuery->have_posts() ) {
 				$myQuery->the_post();
-				$post_temp[] = $post->ID;
+				$post_temp[] = $post;
 			}
 
 			// Reset Post Data
@@ -1205,7 +1217,7 @@ class formatting_correcter extends pluginSedLex {
 		if ($count!=0) {
 			foreach ($result as $r) {
 				$ligne++ ; 
-				$cel1 = new adminCell("<p><b>".$r[1]."</b></p>") ; 	
+				$cel1 = new adminCell("<p><b><a href='".get_permalink($r[0])."'>".$r[1]."</a></b></p>") ; 	
 				$cel1->add_action(__("View formatting issues", $this->pluginID), "viewFormattingIssue") ; 
 				$cel1->add_action(__("Reset", $this->pluginID), "resetFormattingIssue") ; 
 				$cel1->add_action(__("Accept all modifications", $this->pluginID), "acceptAllModificationProposed") ; 

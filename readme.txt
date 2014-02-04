@@ -52,6 +52,10 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.4 = 
+* BUG: The force analysis were not able to get all id of the post, page
+* NEW : Remove incorrect non breaking space
+
 = 1.0.3 = 
 * NEW : Three dots may be change into ellipses
 * NEW : A force analysis of all articles are available
@@ -69,4 +73,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:ebf780a65a050bb0b2f9c0ef39947e3d
+InfoVersion:962d524f986d8eb48b1ef6b22928fac2
