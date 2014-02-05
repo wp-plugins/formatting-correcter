@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.4
+Version: 1.0.5
 
 
 
@@ -298,6 +298,8 @@ class formatting_correcter extends pluginSedLex {
 			case 'change_ellipses' : return false			; break ; 
 			case 'remove_nbsp' : return false			; break ; 
 			
+			case 'advanced_CBE_PCT' : return false			; break ; 
+			case 'epc_guidelines': return false			; break ; 
 			
 			case 'list_post_id_to_check': return array()			; break ; 
 			case 'nb_post_to_check'  : return 0 ; break ; 
@@ -368,7 +370,6 @@ class formatting_correcter extends pluginSedLex {
 						
 		$array_regexp = $this->get_regexp() ; 		
 		
-		
 		// Detect formatting issues
 		$result = $this->split_regexp($text, $array_regexp) ;
 		
@@ -402,6 +403,10 @@ class formatting_correcter extends pluginSedLex {
 	function split_regexp($text, $array_regexp) {
 
 		$array_text = array(array('text'=>$text, 'status'=>"NORMAL")) ;  
+		
+		if ($this->get_param('advanced_CBE_PCT')) {
+			$array_text = $this->issueWithPCT_CBE($text) ; 
+		}
 				
 		foreach ($array_regexp as $regexp) {
 		
@@ -454,6 +459,88 @@ class formatting_correcter extends pluginSedLex {
 		}
 		return $array_text ; 
 	}
+	
+	/** ====================================================================================================================================================
+	* Split text with a plurality of regexp
+	*
+	* @return void
+	*/
+	
+	function issueWithPCT_CBE ($text) {
+		
+		// Detect all url
+		// 1 - All a tag
+		// 2 - stuff in a tag
+		// 3 - the URL
+		// 4 - stuff in a tag
+		// 5 - The name of the link
+		$out = preg_split('/(<a ([^>]*)href=[\'"]([^>\'"]*)[\'"]([^>]*)>([^<]*)<\/a>)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_OFFSET_CAPTURE) ;
+		
+		$new_array_text = array() ; 
+		$j = 0 ; 
+		for ($i=0 ; $i<=(count($out)/6)-1 ; $i++) {
+			// le premier lement $i est le text normal avant le lien
+			if (isset($new_array_text[$j])) {
+				$new_array_text[$j]['text'] .= $out[$i*6][0] ; 
+			} else {
+				$new_array_text[$j] = array('text'=>$out[$i*6][0], 'status'=>"NORMAL"); 
+			}
+			
+			// on regarde si le lien match avec quelquechose
+			if (($this->get_param('epc_guidelines'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/guidelines\/f\/(.*)\.htm$/",$out[$i*6+3][0],$match))) {
+				// vérifie si la structure des guidelines est respectée
+				$directive_code = explode("_", $match[1]) ; 
+				if (count($directive_code)>=1) {
+					$resultat = "Directives ".strtoupper($directive_code[0]) ; 
+				}
+				if (count($directive_code)>=2) {
+					$resultat .= "-".strtoupper($directive_code[1]) ; 
+				}
+				if (count($directive_code)>=3) {
+					$resultat .= " ".strtoupper($directive_code[2]) ; 
+				}
+				$k=3 ; 
+				while ($k<count($directive_code)) {
+					$resultat .= ".".strtoupper($directive_code[$k]) ; 
+					$k++ ; 
+				}
+				if ($out[$i*6+5][0]==$resultat) {
+					// Le texte est correct donc on ne fait rien
+					$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
+				} else {
+					// Le texte est incorrect donc on l'indique'
+					$new_array_text[$j]['text'] .= "<a " ; 
+					$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+					$new_array_text[$j]['text'] .= "href=\"" ; 
+					$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
+					$new_array_text[$j]['text'] .= "\"" ;
+					$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+					$new_array_text[$j]['text'] .= ">" ; 
+					$j++ ; 
+					$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$resultat, 'message'=> addslashes(__("Correct this EPC Guidelines name?",$this->pluginID))); 
+					$j++ ; 
+					$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
+				}
+				
+			} elseif (preg_match("/ratapour/",$out[$i*6+3][0])) {
+				$j++ ; 
+				
+			} else {
+				// Si rien ne match, cela veut dire qu'il faut considerer que c'est un text normal
+				$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
+			}
+		}
+		
+		// on ajoute le dernier element qui est normal
+		if (isset($new_array_text[$j])) {
+			$new_array_text[$j]['text'] .= $out[count($out)-1][0] ; 
+		} else {
+			$new_array_text[$j] = array('text'=>$out[count($out)-1][0], 'status'=>"NORMAL"); 
+		}
+		
+		return $new_array_text ; 
+	}
+
 	
 	/** ====================================================================================================================================================
 	* The admin configuration page
@@ -545,6 +632,8 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('show_nb', __('Display the number of issues in the left column:',  $this->pluginID),"","",array('show_nb_error')) ; 
 				$params->add_param('show_nb_error', __('If this is checked, display the total number of issues, if not, display only the number of posts with at least one issue:',  $this->pluginID)) ; 
 				$params->add_param('max_page_to_check', __('When forced, how many posts is to be checked?',  $this->pluginID)) ; 
+				$params->add_param('advanced_CBE_PCT', __('Advanced PCT-EPC link formatting link (normally, do not activate this option)',  $this->pluginID),"","",array('epc_guidelines')) ; 
+				$params->add_param('epc_guidelines', __('Detect issues on EPC guidelines links',  $this->pluginID));
 				
 				//$params->add_param('avoid_multiple_revisions', __('Avoid creating a revision for each single modifications you validate:',  $this->pluginID)) ; 
 
@@ -1176,6 +1265,31 @@ class formatting_correcter extends pluginSedLex {
 		
 		if (count($res)==0) {
 			echo "<p style='font-weight:bold;color:#8F0000;'>".__('No entry is available to be displayed... please wait until the background process find an article with issue(s) or force the analysis of all articles with the below button.', $this->pluginID)."</p>"  ; 
+		} else {
+			
+			$args = array(
+				'numberposts'     => -1,
+				'post_type'       => explode(",",$this->get_param('type_page')),
+				'fields'        => 'ids',
+				'nopaging' 		=> true,
+				'post_status'     => 'publish' 
+			);
+			
+			$myQuery = new WP_Query( $args ); 
+
+
+			//Looping through the posts
+			$total = 0 ; 
+			while ( $myQuery->have_posts() ) {
+				$myQuery->the_post();
+				$total ++ ; 
+			}
+
+			// Reset Post Data
+			wp_reset_postdata();
+			
+			echo "<p>".sprintf(__('%s articles/posts have been tested on a total of %s possible articles/posts.', $this->pluginID),"<b>".count($res)."</b>", "<b>".$total."</b>")."</p>"  ; 
+			echo "<p>".__('To trigger a verfication, you may either wait until the baground process verify all articles/posts, or you may force a verification with the button below.', $this->pluginID)."</p>"  ; 
 		}
 		foreach ( $res as $r ) {
 			if ($r->numerror!=0) {

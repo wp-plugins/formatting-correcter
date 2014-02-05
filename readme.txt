@@ -52,6 +52,10 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.5 = 
+* NEW: display the number of articles to be checked / checked
+* NEW: add a option to check EPC guidelines
+
 = 1.0.4 = 
 * BUG: The force analysis were not able to get all id of the post, page
 * NEW : Remove incorrect non breaking space
@@ -73,4 +77,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:962d524f986d8eb48b1ef6b22928fac2
+InfoVersion:7a7a0973a6fc78fbc680a3bdab533db4
