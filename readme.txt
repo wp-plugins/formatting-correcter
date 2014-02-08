@@ -6,7 +6,7 @@ Author URI: http://www.sedlex.fr/
 Plugin URI: http://wordpress.org/plugins/formatting-correcter/
 Tags: tag
 Requires at least: 3.0
-Tested up to: 3.8
+Tested up to: 3.8.1
 Stable tag: trunk
 
 The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. 
@@ -52,6 +52,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.7 = 
+* BUG: global improvement of the regex
+
 = 1.0.6 = 
 * NEW: add a blank after a comma 
 * NEW: add a blank after a double quote 
@@ -82,4 +85,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:2788c76a76f01546fc209f4d91d601a0
+InfoVersion:4736414bb80962cac7e6e324f2855d0f

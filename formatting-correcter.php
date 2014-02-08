@@ -3,7 +3,8 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.6
+Version: 1.0.7
+
 
 
 
@@ -424,8 +425,8 @@ class formatting_correcter extends pluginSedLex {
 					
 					$next_separator = true ; 
 		
-					$out = preg_split('/('.$regexp['found'].')/', $text, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_OFFSET_CAPTURE) ;
-					$out2 = preg_split('/('.$regexp['found'].')/', $text, -1, PREG_SPLIT_OFFSET_CAPTURE) ;
+					$out = preg_split('/('.$regexp['found'].')/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_OFFSET_CAPTURE) ;
+					$out2 = preg_split('/('.$regexp['found'].')/u', $text, -1, PREG_SPLIT_OFFSET_CAPTURE) ;
 					for ($i=0 ; $i<count($out) ; $i++) {
 						$ao = $out[$i] ;
 						// se trouve dans la liste out2 ?
@@ -480,7 +481,7 @@ class formatting_correcter extends pluginSedLex {
 		// 3 - the URL
 		// 4 - stuff in a tag
 		// 5 - The name of the link
-		$out = preg_split('/(<a ([^>]*)href=[\'"]([^>\'"]*)[\'"]([^>]*)>([^<]*)<\/a>)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_OFFSET_CAPTURE) ;
+		$out = preg_split('/(<a ([^>]*)href=[\'"]([^>\'"]*)[\'"]([^>]*)>([^<]*)<\/a>)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_OFFSET_CAPTURE) ;
 		
 		$new_array_text = array() ; 
 		
@@ -928,130 +929,12 @@ class formatting_correcter extends pluginSedLex {
 				$s_ancre = split("_",$ancre) ; 
 				
 				// Si on a une ancre et qu'elle correspond bien, on determine le nom
-				if (($ancre!="")&&($s_ancre[1]==substr($num,1))){
-					$k=2 ; 
-					$nexthide = false ;
-					while ($k<count($s_ancre)) {
-						if ($s_ancre[$k]!="") {
-							if (!$nexthide) {
-								$debut_lien .=  ".".($s_ancre[$k]) ; 
-							}
-							$nexthide = false ;
-						} else {
-							// car certains lien sont de type _49__1_a et doivent être lu 49.a
-							$nexthide = true ;
-						}
-						
-						$k++ ; 
-					}
-					$resultat = $debut_lien.$fin_lien ; 
-					if ($out[$i*6+5][0]==$resultat) {
-						// Le texte est correct donc on ne fait rien
-						$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
-					} else {
-						// Le texte est incorrect donc on l'indique'
-						$new_array_text[$j]['text'] .= "<a " ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-						$new_array_text[$j]['text'] .= "href=\"" ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
-						$new_array_text[$j]['text'] .= "\"" ;
-						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
-						$new_array_text[$j]['text'] .= ">" ; 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$resultat, 'message'=> addslashes(__("Correct this PCT name?",$this->pluginID))); 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
-					}
-				// Si on a une ancre mais qu'elle ne correspond pas, on supprime l'ancre
-				} elseif (($ancre!="")&&(isset($s_ancre[1]))&&($s_ancre[1]!=substr($num,1))) {
-					$new_array_text[$j]['text'] .= "<a " ; 
-					$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-					$new_array_text[$j]['text'] .= "href=\"http://www.wipo.int/pct/fr/texts/articles/".$num.".htm" ; 
-					$j++ ; 
-					$new_array_text[$j] = array('text'=>"#".$ancre, 'pos'=>$out[$i*6+3][1]+strlen("http://www.wipo.int/pct/fr/texts/articles/".$num.".htm"), 'status'=>"DELIMITER", 'new_text'=>"", 'message'=> addslashes(__("Delete this anchor as it does not match with the URL?",$this->pluginID))); 
-					$j++ ; 
-					$new_array_text[$j] = array('text'=>"\"", 'status'=>"NORMAL"); 
-					$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
-					$new_array_text[$j]['text'] .= ">" ; 
-					$new_array_text[$j]['text'] .= $out[$i*6+5][0] ; 
-					$new_array_text[$j]['text'] .= "</a>" ; 
-				// Aucune ancre ... donc il va falloir deviner ...
-				} else {
-				//Si on a un corresopondance, on devine l'ancre
-					if (($debut_lien==substr(trim($out[$i*6+5][0]),0,strlen($debut_lien)))&&($fin_lien==substr(trim($out[$i*6+5][0]),-strlen($fin_lien)))) {
-						$res = str_replace(".", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
-						$res = str_replace("(", " ", $res) ; 
-						$res = str_replace(")", " ", $res) ; 
-						$res2 = split(" ",trim($res)) ; 
-						$anchor = "#".$debut_ancre ; 
-						for ($k=1;$k<count($res2) ; $k++) {
-							if ($res2[$k]!=""){
-								$anchor .= "_".$res2[$k] ;
-							}
-						}
-						$new_array_text[$j]['text'] .= "<a " ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-						$new_array_text[$j]['text'] .= "href=\"" ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+3][0] ; 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>"", 'pos'=>$out[$i*6+3][1]+strlen($out[$i*6+3][0]), 'status'=>"DELIMITER", 'new_text'=>$anchor, 'message'=> addslashes(__("Add this anchor?",$this->pluginID))); 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>"\"", 'status'=>"NORMAL"); 
-						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
-						$new_array_text[$j]['text'] .= ">" ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+5][0] ; 
-						$new_array_text[$j]['text'] .= "</a>" ; 
-					//Si on n'a aucune corresopondance, on remplace le nom
-					} else {
-						$new_array_text[$j]['text'] .= "<a " ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-						$new_array_text[$j]['text'] .= "href=\"" ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
-						$new_array_text[$j]['text'] .= "\"" ;
-						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
-						$new_array_text[$j]['text'] .= ">" ; 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$debut_lien.$fin_lien, 'message'=> addslashes(__("Correct this PCT article name?",$this->pluginID))); 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
-					}
-				}
-			// PCT - VERIF FORMAT URL - RULE
-			} elseif (($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/rules\/(.*)$/",$out[$i*6+3][0], $match))) {
-				$val = split("#",$match[1]) ;
-				$num = str_replace(".htm","",$val[0]) ; 
-				$ancre = "" ;
-				if (isset($val[1])) {
-					$ancre = $val[1] ;
-				}
-				$debut_lien="R".substr($num,1) ; 
-				$fin_lien=" PCT" ; 
-				$debut_ancre = "_".substr($num,1) ; 
-				
-				$s_ancre = split("_",$ancre) ; 
-				
-				if ($num=="rtax") {
-					if ($out[$i*6+5][0]=="Barème de taxes") {
-						// Le texte est correct donc on ne fait rien
-						$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
-					} else {
-						// Le texte est incorrect donc on l'indique'
-						$new_array_text[$j]['text'] .= "<a " ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-						$new_array_text[$j]['text'] .= "href=\"" ; 
-						$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
-						$new_array_text[$j]['text'] .= "\"" ;
-						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
-						$new_array_text[$j]['text'] .= ">" ; 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>"Barème de taxes", 'message'=> addslashes(__("Correct this PCT name?",$this->pluginID))); 
-						$j++ ; 
-						$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
-					}
-				} else {
-					// Si on a une ancre et qu'elle correspond bien, on determine le nom
+			
+				if ((strlen($num)>=1)&&(is_numeric(substr($num,1,1)))) {
+
 					if (($ancre!="")&&($s_ancre[1]==substr($num,1))){
 						$k=2 ; 
+						$nexthide = false ;
 						while ($k<count($s_ancre)) {
 							if ($s_ancre[$k]!="") {
 								if (!$nexthide) {
@@ -1062,7 +945,7 @@ class formatting_correcter extends pluginSedLex {
 								// car certains lien sont de type _49__1_a et doivent être lu 49.a
 								$nexthide = true ;
 							}
-							
+						
 							$k++ ; 
 						}
 						$resultat = $debut_lien.$fin_lien ; 
@@ -1087,9 +970,9 @@ class formatting_correcter extends pluginSedLex {
 					} elseif (($ancre!="")&&(isset($s_ancre[1]))&&($s_ancre[1]!=substr($num,1))) {
 						$new_array_text[$j]['text'] .= "<a " ; 
 						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
-						$new_array_text[$j]['text'] .= "href=\"http://www.wipo.int/pct/fr/texts/rules/".$num.".htm" ; 
+						$new_array_text[$j]['text'] .= "href=\"http://www.wipo.int/pct/fr/texts/articles/".$num.".htm" ; 
 						$j++ ; 
-						$new_array_text[$j] = array('text'=>"#".$ancre, 'pos'=>$out[$i*6+3][1]+strlen("http://www.wipo.int/pct/fr/texts/rules/".$num.".htm"), 'status'=>"DELIMITER", 'new_text'=>"", 'message'=> addslashes(__("Delete this anchor as it does not match with the URL?",$this->pluginID))); 
+						$new_array_text[$j] = array('text'=>"#".$ancre, 'pos'=>$out[$i*6+3][1]+strlen("http://www.wipo.int/pct/fr/texts/articles/".$num.".htm"), 'status'=>"DELIMITER", 'new_text'=>"", 'message'=> addslashes(__("Delete this anchor as it does not match with the URL?",$this->pluginID))); 
 						$j++ ; 
 						$new_array_text[$j] = array('text'=>"\"", 'status'=>"NORMAL"); 
 						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
@@ -1132,9 +1015,135 @@ class formatting_correcter extends pluginSedLex {
 							$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
 							$new_array_text[$j]['text'] .= ">" ; 
 							$j++ ; 
-							$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$debut_lien.$fin_lien, 'message'=> addslashes(__("Correct this PCT rules name?",$this->pluginID))); 
+							$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$debut_lien.$fin_lien, 'message'=> addslashes(__("Correct this PCT article name?",$this->pluginID))); 
 							$j++ ; 
 							$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
+						}
+					}
+				}
+			// PCT - VERIF FORMAT URL - RULE
+			} elseif (($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/rules\/(.*)$/",$out[$i*6+3][0], $match))) {
+				$val = split("#",$match[1]) ;
+				$num = str_replace(".htm","",$val[0]) ; 
+				$ancre = "" ;
+				if (isset($val[1])) {
+					$ancre = $val[1] ;
+				}
+				$debut_lien="R".substr($num,1) ; 
+				$fin_lien=" PCT" ; 
+				$debut_ancre = "_".substr($num,1) ; 
+				
+				$s_ancre = split("_",$ancre) ; 
+				
+				if ($num=="rtax") {
+					if ($out[$i*6+5][0]=="Barème de taxes") {
+						// Le texte est correct donc on ne fait rien
+						$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
+					} else {
+						// Le texte est incorrect donc on l'indique'
+						$new_array_text[$j]['text'] .= "<a " ; 
+						$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+						$new_array_text[$j]['text'] .= "href=\"" ; 
+						$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
+						$new_array_text[$j]['text'] .= "\"" ;
+						$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+						$new_array_text[$j]['text'] .= ">" ; 
+						$j++ ; 
+						$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>"Barème de taxes", 'message'=> addslashes(__("Correct this PCT name?",$this->pluginID))); 
+						$j++ ; 
+						$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
+					}
+				} else {
+				
+					if ((strlen($num)>=1)&&(is_numeric(substr($num,1,1)))) {
+					
+						// Si on a une ancre et qu'elle correspond bien, on determine le nom
+						if (($ancre!="")&&($s_ancre[1]==substr($num,1))){
+							$k=2 ; 
+							while ($k<count($s_ancre)) {
+								if ($s_ancre[$k]!="") {
+									if (!$nexthide) {
+										$debut_lien .=  ".".($s_ancre[$k]) ; 
+									}
+									$nexthide = false ;
+								} else {
+									// car certains lien sont de type _49__1_a et doivent être lu 49.a
+									$nexthide = true ;
+								}
+							
+								$k++ ; 
+							}
+							$resultat = $debut_lien.$fin_lien ; 
+							if ($out[$i*6+5][0]==$resultat) {
+								// Le texte est correct donc on ne fait rien
+								$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
+							} else {
+								// Le texte est incorrect donc on l'indique'
+								$new_array_text[$j]['text'] .= "<a " ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+								$new_array_text[$j]['text'] .= "href=\"" ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
+								$new_array_text[$j]['text'] .= "\"" ;
+								$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+								$new_array_text[$j]['text'] .= ">" ; 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$resultat, 'message'=> addslashes(__("Correct this PCT name?",$this->pluginID))); 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
+							}
+						// Si on a une ancre mais qu'elle ne correspond pas, on supprime l'ancre
+						} elseif (($ancre!="")&&(isset($s_ancre[1]))&&($s_ancre[1]!=substr($num,1))) {
+							$new_array_text[$j]['text'] .= "<a " ; 
+							$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+							$new_array_text[$j]['text'] .= "href=\"http://www.wipo.int/pct/fr/texts/rules/".$num.".htm" ; 
+							$j++ ; 
+							$new_array_text[$j] = array('text'=>"#".$ancre, 'pos'=>$out[$i*6+3][1]+strlen("http://www.wipo.int/pct/fr/texts/rules/".$num.".htm"), 'status'=>"DELIMITER", 'new_text'=>"", 'message'=> addslashes(__("Delete this anchor as it does not match with the URL?",$this->pluginID))); 
+							$j++ ; 
+							$new_array_text[$j] = array('text'=>"\"", 'status'=>"NORMAL"); 
+							$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+							$new_array_text[$j]['text'] .= ">" ; 
+							$new_array_text[$j]['text'] .= $out[$i*6+5][0] ; 
+							$new_array_text[$j]['text'] .= "</a>" ; 
+						// Aucune ancre ... donc il va falloir deviner ...
+						} else {
+						//Si on a un corresopondance, on devine l'ancre
+							if (($debut_lien==substr(trim($out[$i*6+5][0]),0,strlen($debut_lien)))&&($fin_lien==substr(trim($out[$i*6+5][0]),-strlen($fin_lien)))) {
+								$res = str_replace(".", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
+								$res = str_replace("(", " ", $res) ; 
+								$res = str_replace(")", " ", $res) ; 
+								$res2 = split(" ",trim($res)) ; 
+								$anchor = "#".$debut_ancre ; 
+								for ($k=1;$k<count($res2) ; $k++) {
+									if ($res2[$k]!=""){
+										$anchor .= "_".$res2[$k] ;
+									}
+								}
+								$new_array_text[$j]['text'] .= "<a " ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+								$new_array_text[$j]['text'] .= "href=\"" ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+3][0] ; 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>"", 'pos'=>$out[$i*6+3][1]+strlen($out[$i*6+3][0]), 'status'=>"DELIMITER", 'new_text'=>$anchor, 'message'=> addslashes(__("Add this anchor?",$this->pluginID))); 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>"\"", 'status'=>"NORMAL"); 
+								$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+								$new_array_text[$j]['text'] .= ">" ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+5][0] ; 
+								$new_array_text[$j]['text'] .= "</a>" ; 
+							//Si on n'a aucune corresopondance, on remplace le nom
+							} else {
+								$new_array_text[$j]['text'] .= "<a " ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+								$new_array_text[$j]['text'] .= "href=\"" ; 
+								$new_array_text[$j]['text'] .= $out[$i*6+3][0] ;
+								$new_array_text[$j]['text'] .= "\"" ;
+								$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+								$new_array_text[$j]['text'] .= ">" ; 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>$out[$i*6+5][0], 'pos'=>$out[$i*6+5][1], 'status'=>"DELIMITER", 'new_text'=>$debut_lien.$fin_lien, 'message'=> addslashes(__("Correct this PCT rules name?",$this->pluginID))); 
+								$j++ ; 
+								$new_array_text[$j] = array('text'=>"</a>", 'status'=>"NORMAL"); 
+							}
 						}
 					}
 				}
@@ -1309,22 +1318,36 @@ class formatting_correcter extends pluginSedLex {
 				$text = $r['text'] ; 
 				if ($this->get_param('shorten_normal')){
 					if (strlen($text)>650) {
-						$text = substr($text,0,300)." ... ".substr($text,-300) ; 
+						$text = mb_substr($text,0,300,'UTF-8')." ... ".mb_substr($text,-300,300,'UTF-8') ; 
+					} else {
+						// nothing
 					}
 				}
-				$text = htmlentities($text, ENT_COMPAT, 'UTF-8') ; 
+				$textold = $text ; 
+				$text = htmlentities($text, ENT_COMPAT|ENT_DISALLOWED, 'UTF-8') ; 
+				if ($text=="") {
+					// A cause d'un bug de htmlentities
+					$text = utf8_encode(htmlentities($textold, ENT_COMPAT, 'ISO-8859-1')) ; 
+				}
 				$text = str_replace("\r",'', $text) ; 
 				$text = str_replace("\n",'<br/>', $text) ;
 				$solu .= $text ; 
-			}
-			if ($r['status']!="NORMAL") {
+			} else {
 				$text = htmlentities($r['text'], ENT_COMPAT, 'UTF-8') ; 
+				if ($text=="") {
+					// A cause d'un bug de htmlentities
+					$text = utf8_encode(htmlentities($r['text'], ENT_COMPAT, 'ISO-8859-1')) ; 
+				}
 				$text = str_replace(' ','&nbsp;', $text) ; 
 				$text = str_replace("\r",'', $text) ; 
 				$text = str_replace("\n",'<br/>', $text) ;
 				
 				$new_text = htmlentities($r['new_text'], ENT_COMPAT, 'UTF-8') ; 
- 				$new_text = str_replace(' ','&nbsp;', $new_text) ; 
+ 				if ($text=="") {
+					// A cause d'un bug de htmlentities
+					$text = utf8_encode(htmlentities($r['text'], ENT_COMPAT, 'ISO-8859-1')) ; 
+				}
+				$new_text = str_replace(' ','&nbsp;', $new_text) ; 
 				$new_text = str_replace("\r",'', $new_text) ; 
 				$new_text = str_replace("\n",'<br/>', $new_text) ;
 
@@ -1344,23 +1367,21 @@ class formatting_correcter extends pluginSedLex {
 	
 		$regexp_norm = array() ; 
 		
-		
-		
 		if ($this->get_param('space_after_comma')) {
-			$regexp_norm[] = array('found'=>",([^ ])", 'replace'=>', ###2###', 'message'=>__("Add a space after this comma?", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>" ,", 'replace'=>',', 'message'=>__("Remove space before this comma?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>",([^\p{Zs}<&0-9])", 'replace'=>', ###1###', 'message'=>__("Add a space after this comma?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^\",;.]) ,", 'replace'=>'###1###,', 'message'=>__("Remove space before this comma?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('french_add_blank_after_double_quote')) {
-			$regexp_norm[] = array('found'=>"([^ ])\"([^ \]>])(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###" ###2###', 'message'=>__("Add a space after this double quote?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^ ;(])\"([^ \p{L})&\]>])(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###" ###2###', 'message'=>__("Add a space after this double quote?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('change_ellipses')) {
-			$regexp_norm[] = array('found'=>"( |&nbsp;)*[.]{3,}( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)*[.]{3,}( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_double_space')) {
-			$regexp_norm[] = array('found'=>"( |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;){2,}",'replace'=>" ", 'message'=>__("Remove this double space?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_nbsp')) {
@@ -1374,10 +1395,9 @@ class formatting_correcter extends pluginSedLex {
 		
 		if ($this->get_param('space_after_before_html')) {
 			$regexp_norm[] = array('found'=>"(<\w[^>]*>)( |&nbsp;)", 'replace'=>' ###1###', 'message'=>__("Move the space before the opening HTML tag?", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"( |&nbsp;)(<\/\w[^>]*>)", 'replace'=>'###2### ', 'message'=>__("Move the space after the closing HTML tag?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)(<\/\w[^>]*>)", 'replace'=>'###2### ', 'message'=>__("Move the space after the closing HTML tag?", $this->pluginID))  ; 
 		}
 
-		
 		if ($this->get_param('remove_div')) {
 			$regexp_norm[] = array('found'=>"<\/?div[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"<\/?dl[^>]*>", 'replace'=>'', 'message'=>__("Remove the HTML tag?", $this->pluginID))  ; 
@@ -1386,8 +1406,8 @@ class formatting_correcter extends pluginSedLex {
 		}
 		
 		if ($this->get_param('french_punctuations')) {
-			$regexp_norm[] = array('found'=>" ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'&nbsp;###1###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"([^&]{6}[^&!?:;,.%])([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^&!?:;,.%]) ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"([^&]{6}[^&!?:;,.%]{2})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
 		}
 		
 		$regexp_found = $this->get_param_macro('regex_error') ; 
@@ -1925,7 +1945,7 @@ class formatting_correcter extends pluginSedLex {
 			wp_reset_postdata();
 			
 			echo "<p>".sprintf(__('%s articles/posts have been tested on a total of %s possible articles/posts.', $this->pluginID),"<b>".count($res)."</b>", "<b>".$total."</b>")."</p>"  ; 
-			echo "<p>".__('To trigger a verfication, you may either wait until the baground process verify all articles/posts, or you may force a verification with the button below.', $this->pluginID)."</p>"  ; 
+			echo "<p>".__('To trigger a verification, you may either wait until the baground process verify all articles/posts, or you may force a verification with the button below.', $this->pluginID)."</p>"  ; 
 		}
 		foreach ( $res as $r ) {
 			if ($r->numerror!=0) {
