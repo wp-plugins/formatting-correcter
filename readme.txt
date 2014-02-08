@@ -52,6 +52,11 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.6 = 
+* NEW: add a blank after a comma 
+* NEW: add a blank after a double quote 
+* NEW: add a option to check EPC rules/articles
+
 = 1.0.5 = 
 * NEW: display the number of articles to be checked / checked
 * NEW: add a option to check EPC guidelines
@@ -77,4 +82,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:7a7a0973a6fc78fbc680a3bdab533db4
+InfoVersion:2788c76a76f01546fc209f4d91d601a0
