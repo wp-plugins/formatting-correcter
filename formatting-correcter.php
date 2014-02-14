@@ -3,7 +3,8 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.7
+Version: 1.0.8
+
 
 
 
@@ -349,7 +350,7 @@ class formatting_correcter extends pluginSedLex {
 
 		// We get a random post 
 		$args = array(
-			'numberposts'     => 1,
+			'posts_per_page'     => 1,
 			'orderby'         => 'rand',
 			'post__not_in' => $exclude_ids, 
 			'post_type'       => explode(",",$this->get_param('type_page')),
@@ -1822,11 +1823,10 @@ class formatting_correcter extends pluginSedLex {
 		if (empty($at)) {
 			// We get the post 
 			$args = array(
-				'numberposts'     => intval($this->get_param('max_page_to_check')),
+				'posts_per_page'     => intval($this->get_param('max_page_to_check')),
 				'orderby'         => 'rand',
 				'post_type'       => explode(",",$this->get_param('type_page')),
 				'fields'        => 'ids',
-				'nopaging' 		=> true,
 				'post_status'     => 'publish' 
 			);
 			

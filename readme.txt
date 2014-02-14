@@ -52,6 +52,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.8 = 
+* BUG: the  non breaking space should not be in a html tag
+
 = 1.0.7 = 
 * BUG: global improvement of the regex
 
@@ -85,4 +88,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:4736414bb80962cac7e6e324f2855d0f
+InfoVersion:4f7171e830cd12ce4c8238397379a6fb
