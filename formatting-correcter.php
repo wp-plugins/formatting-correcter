@@ -9,6 +9,7 @@ Version: 1.0.8
 
 
 
+
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -1325,7 +1326,7 @@ class formatting_correcter extends pluginSedLex {
 					}
 				}
 				$textold = $text ; 
-				$text = htmlentities($text, ENT_COMPAT|ENT_DISALLOWED, 'UTF-8') ; 
+				$text = htmlentities($text, ENT_COMPAT, 'UTF-8') ; 
 				if ($text=="") {
 					// A cause d'un bug de htmlentities
 					$text = utf8_encode(htmlentities($textold, ENT_COMPAT, 'ISO-8859-1')) ; 
