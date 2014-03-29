@@ -3,7 +3,8 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.8
+Version: 1.0.9
+
 
 
 
@@ -616,7 +617,7 @@ class formatting_correcter extends pluginSedLex {
 				
 			// EPC 2013 - VERIF FORMAT URL
 			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2013\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
-				$val = split("#",$match[1]) ;
+				$val = explode("#",$match[1]) ;
 				$num = $val[0] ; 
 				$ancre = "" ;
 				if (isset($val[1])) {
@@ -636,7 +637,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 				if ($ok) {
 					
-					$s_ancre = split("_",$ancre) ; 
+					$s_ancre = explode("_",$ancre) ; 
 					
 					// Si on a une ancre et qu'elle correspond bien, on determine le nom
 					if (($ancre!="")&&($s_ancre[0]==$debut_lien)){
@@ -731,7 +732,7 @@ class formatting_correcter extends pluginSedLex {
 						if (($debut_lien==substr(trim($out[$i*6+5][0]),0,strlen($debut_lien)))&&($fin_lien==substr(trim($out[$i*6+5][0]),-strlen($fin_lien)))) {
 							$res = str_replace(")", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
 							$res = str_replace("(", " ", $res) ; 
-							$res2 = split(" ",trim($res)) ; 
+							$res2 = explode(" ",trim($res)) ; 
 							$anchor = "#".$debut_ancre ; 
 							for ($k=1;$k<count($res2) ; $k++) {
 								if ($res2[$k]!=""){
@@ -767,7 +768,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 			// EPC 1973 - VERIF FORMAT URL
 			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/1973\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
-				$val = split("#",$match[1]) ;
+				$val = explode("#",$match[1]) ;
 				$num = $val[0] ; 
 				$ancre = "" ;
 				if (isset($val[1])) {
@@ -787,7 +788,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 				if ($ok) {
 					
-					$s_ancre = split("_",$ancre) ; 
+					$s_ancre = explode("_",$ancre) ; 
 					
 					// Si on a une ancre et qu'elle correspond bien, on determine le nom
 					if (($ancre!="")&&($s_ancre[0]==$debut_lien)){
@@ -882,7 +883,7 @@ class formatting_correcter extends pluginSedLex {
 						if (($debut_lien==substr(trim($out[$i*6+5][0]),0,strlen($debut_lien)))&&($fin_lien==substr(trim($out[$i*6+5][0]),-strlen($fin_lien)))) {
 							$res = str_replace(")", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
 							$res = str_replace("(", " ", $res) ; 
-							$res2 = split(" ",trim($res)) ; 
+							$res2 = explode(" ",trim($res)) ; 
 							$anchor = "#".$debut_ancre ; 
 							for ($k=1;$k<count($res2) ; $k++) {
 								if ($res2[$k]!=""){
@@ -918,7 +919,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 			// PCT - VERIF FORMAT URL - ARTICLE
 			} elseif (($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/articles\/(.*)$/",$out[$i*6+3][0], $match))) {
-				$val = split("#",$match[1]) ;
+				$val = explode("#",$match[1]) ;
 				$num = str_replace(".htm","",$val[0]) ; 
 				$ancre = "" ;
 				if (isset($val[1])) {
@@ -928,7 +929,7 @@ class formatting_correcter extends pluginSedLex {
 				$fin_lien=" PCT" ; 
 				$debut_ancre = "_".substr($num,1) ; 
 				
-				$s_ancre = split("_",$ancre) ; 
+				$s_ancre = explode("_",$ancre) ; 
 				
 				// Si on a une ancre et qu'elle correspond bien, on determine le nom
 			
@@ -988,7 +989,7 @@ class formatting_correcter extends pluginSedLex {
 							$res = str_replace(".", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
 							$res = str_replace("(", " ", $res) ; 
 							$res = str_replace(")", " ", $res) ; 
-							$res2 = split(" ",trim($res)) ; 
+							$res2 = explode(" ",trim($res)) ; 
 							$anchor = "#".$debut_ancre ; 
 							for ($k=1;$k<count($res2) ; $k++) {
 								if ($res2[$k]!=""){
@@ -1025,7 +1026,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 			// PCT - VERIF FORMAT URL - RULE
 			} elseif (($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/rules\/(.*)$/",$out[$i*6+3][0], $match))) {
-				$val = split("#",$match[1]) ;
+				$val = explode("#",$match[1]) ;
 				$num = str_replace(".htm","",$val[0]) ; 
 				$ancre = "" ;
 				if (isset($val[1])) {
@@ -1035,7 +1036,7 @@ class formatting_correcter extends pluginSedLex {
 				$fin_lien=" PCT" ; 
 				$debut_ancre = "_".substr($num,1) ; 
 				
-				$s_ancre = split("_",$ancre) ; 
+				$s_ancre = explode("_",$ancre) ; 
 				
 				if ($num=="rtax") {
 					if ($out[$i*6+5][0]=="Barème de taxes") {
@@ -1113,7 +1114,7 @@ class formatting_correcter extends pluginSedLex {
 								$res = str_replace(".", " ", str_replace($fin_lien,"",trim($out[$i*6+5][0]))) ; 
 								$res = str_replace("(", " ", $res) ; 
 								$res = str_replace(")", " ", $res) ; 
-								$res2 = split(" ",trim($res)) ; 
+								$res2 = explode(" ",trim($res)) ; 
 								$anchor = "#".$debut_ancre ; 
 								for ($k=1;$k<count($res2) ; $k++) {
 									if ($res2[$k]!=""){
@@ -1193,11 +1194,14 @@ class formatting_correcter extends pluginSedLex {
 		}
 		
 		?>
-		<div class="wrap">
-			<div id="icon-themes" class="icon32"><br></div>
+		<div class="plugin-titleSL">
 			<h2><?php echo $this->pluginName ?></h2>
 		</div>
-		<div style="padding:20px;">			
+		
+		<div class="plugin-contentSL">		
+				
+			<?php echo $this->signature ; ?>
+
 			<?php
 			//===============================================================================================
 			// After this comment, you may modify whatever you want
@@ -1370,7 +1374,7 @@ class formatting_correcter extends pluginSedLex {
 		$regexp_norm = array() ; 
 		
 		if ($this->get_param('space_after_comma')) {
-			$regexp_norm[] = array('found'=>",([^\p{Zs}<&0-9])", 'replace'=>', ###1###', 'message'=>__("Add a space after this comma?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>",([^\p{Zs}<&0-9\r\n])", 'replace'=>', ###1###', 'message'=>__("Add a space after this comma?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"([^\",;.]) ,", 'replace'=>'###1###,', 'message'=>__("Remove space before this comma?", $this->pluginID))  ; 
 		}
 		
@@ -1380,6 +1384,7 @@ class formatting_correcter extends pluginSedLex {
 		
 		if ($this->get_param('change_ellipses')) {
 			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)*[.]{3,}( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)*[…]( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse to the HTML code?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_double_space')) {

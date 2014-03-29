@@ -52,6 +52,10 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.9 = 
+* NEW: The ... will be modified into &-helip;
+* NEW: improve the look of the plugin
+
 = 1.0.8 = 
 * BUG: the  non breaking space should not be in a html tag
 
@@ -88,4 +92,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:165d7b05c8cdd67332fa628ef18065b9
+InfoVersion:ca74b7e2319793b3608d634249563094
