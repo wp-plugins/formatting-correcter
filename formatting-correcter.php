@@ -3,14 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.9
-
-
-
-
-
-
-
+Version: 1.0.10
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -1384,7 +1377,6 @@ class formatting_correcter extends pluginSedLex {
 		
 		if ($this->get_param('change_ellipses')) {
 			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)*[.]{3,}( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse?", $this->pluginID))  ; 
-			$regexp_norm[] = array('found'=>"(\p{Zs}| |&nbsp;)*[…]( |&nbsp;)*", 'replace'=>'&hellip; ', 'message'=>__("Transform this ellipse to the HTML code?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('remove_double_space')) {

@@ -52,6 +52,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.10 = 
+* BUG: Finally, modifiying ... into, &-helip; is not a good idea
+
 = 1.0.9 = 
 * NEW: The ... will be modified into &-helip;
 * NEW: improve the look of the plugin
@@ -92,4 +95,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:ca74b7e2319793b3608d634249563094
+InfoVersion:e140837d812e7d624d07cd9643ea7c53
