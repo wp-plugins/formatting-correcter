@@ -6,7 +6,7 @@ Author URI: http://www.sedlex.fr/
 Plugin URI: http://wordpress.org/plugins/formatting-correcter/
 Tags: tag
 Requires at least: 3.0
-Tested up to: 3.8.1
+Tested up to: 3.9
 Stable tag: trunk
 
 The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. 
@@ -25,14 +25,9 @@ This plugins works on MU installations
 
 = Features of the framework =
 
-This plugin uses the SL framework. This framework eases the creation of new plugins by providing incredible tools and frames.
+This plugin uses the SL framework. This framework eases the creation of new plugins by providing tools and frames (see dev-toolbox plugin for more info).
 
-For instance, a new created plugin comes with
-
-* A translation interface to simplify the localization of the text of the plugin ; 
-* An embedded SVN client (subversion) to easily commit/update the plugin in wordpress.org repository ; 
-* A detailled documentation of all available classes and methodes ; 
-* etc.
+You may easily translate the text of the plugin and submit it to the developer, send a feedback, or choose the location of the plugin in the admin panel.
 
 Have fun !
 
