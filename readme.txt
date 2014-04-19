@@ -52,6 +52,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.11 = 
+* NEW: Update of the framework
+
 = 1.0.10 = 
 * BUG: Finally, modifiying ... into, &-helip; is not a good idea
 
@@ -95,4 +98,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:e140837d812e7d624d07cd9643ea7c53
+InfoVersion:e2308b0dfca523f88ba1bf8ae8e4ba25
