@@ -47,6 +47,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.0.12 = 
+* BUG: the tinyMCE may be broken in certain situations
+
 = 1.0.11 = 
 * NEW: Update of the framework
 
@@ -93,4 +96,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:9b538b777d59a8c6e7cb438b34171c66
+InfoVersion:77257c350b2af05aa5f6b53b84c1a8d3

@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.11
+Version: 1.0.12
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -1798,8 +1798,8 @@ class formatting_correcter extends pluginSedLex {
 			//Normalement c'est ça : $initArray['entities'] = '160,nbsp,38,amp,60,lt,62,gt';	
 			// On evite la suppression de &nbsp;
 			//$initArray['entities'] = '38,amp,60,lt,62,gt';	
-			$initArray['mode'] =  'textareas' ; 
-			$initArray['theme'] =  'advanced' ; 
+		//	$initArray['mode'] =  'textareas' ; 
+		//	$initArray['theme'] =  'advanced' ; 
 			$initArray['entity_encoding'] =  'named' ; 
 			$initArray['entities'] =  '160,nbsp' ; 
 		}
