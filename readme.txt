@@ -47,53 +47,35 @@ Have fun !
 
 == Changelog ==
 
-= 1.0.12 = 
+= 1.1.0 = 
+* NEW : Now attachment may be anaysed 
+* NEW : title and excerpt may also be anaysed
+
+= 1.0.0 -&gt; 1.0.12 = 
 * BUG: the tinyMCE may be broken in certain situations
-
-= 1.0.11 = 
 * NEW: Update of the framework
-
-= 1.0.10 = 
 * BUG: Finally, modifiying ... into, &-helip; is not a good idea
-
-= 1.0.9 = 
 * NEW: The ... will be modified into &-helip;
 * NEW: improve the look of the plugin
-
-= 1.0.8 = 
 * BUG: the  non breaking space should not be in a html tag
-
-= 1.0.7 = 
 * BUG: global improvement of the regex
-
-= 1.0.6 = 
 * NEW: add a blank after a comma 
 * NEW: add a blank after a double quote 
 * NEW: add a option to check EPC rules/articles
-
-= 1.0.5 = 
 * NEW: display the number of articles to be checked / checked
 * NEW: add a option to check EPC guidelines
-
-= 1.0.4 = 
 * BUG: The force analysis were not able to get all id of the post, page
 * NEW : Remove incorrect non breaking space
-
-= 1.0.3 = 
 * NEW : Three dots may be change into ellipses
 * NEW : A force analysis of all articles are available
 * NEW : Space may be removed from inside HTML tag
-
-= 1.0.2 = 
 * NEW : improve the leading space removal
 * NEW : you may delete the DIV tag in the text of posts
 * NEW : you may now approve all propositions at the same time
 * NEW : you may edit manually the text if their is an issue
-
-= 1.0.1 = 
 * First release on the WP directory
 
 == Frequently Asked Questions ==
 
  
-InfoVersion:77257c350b2af05aa5f6b53b84c1a8d3
+InfoVersion:a36d33e6e9bcd5809c6e8e15d1b623d59f7b1ccc

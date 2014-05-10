@@ -1,4 +1,4 @@
-function replaceTextInPost(message, idPost, numSeparator, posToCheck) {
+function replaceTextInPost(message, idPost, numSeparator, posToCheck, lieu) {
 	var r=confirm(message); 
 	
 	if (r) {
@@ -8,6 +8,7 @@ function replaceTextInPost(message, idPost, numSeparator, posToCheck) {
 			action: 'replaceWithProposedModifications_FR', 
 			id:idPost, 
 			num:numSeparator, 
+			zone:lieu, 
 			pos:posToCheck
 		} 
 		jQuery.post(ajaxurl, arguments, function(response) {
@@ -18,7 +19,7 @@ function replaceTextInPost(message, idPost, numSeparator, posToCheck) {
 }
 
 function validAllIssue(message, idPost) {
-	replaceTextInPost(message, idPost, "ALL", "ALL") ;
+	replaceTextInPost(message, idPost, "ALL", "ALL", "ALL") ;
 }
 
 function showEditor(idPost) {

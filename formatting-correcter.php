@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.0.12
+Version: 1.1.0
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -119,7 +119,7 @@ class formatting_correcter extends pluginSedLex {
 	*/
 	
 	public function _update() {
-		SL_Debug::log(get_class(), "Update the plugin." , 4) ; 
+		SLFramework_Debug::log(get_class(), "Update the plugin." , 4) ; 
 	}
 	
 	/**====================================================================================================================================================
@@ -296,6 +296,9 @@ class formatting_correcter extends pluginSedLex {
 			case 'change_ellipses' : return false			; break ; 
 			case 'remove_nbsp' : return false			; break ; 
 			case 'space_after_comma' : return false			; break ; 
+			case 'strange_accentuation' : return false			; break ; 
+			
+			
 			
 			case 'shorten_normal'    : return true			; break ; 
 			
@@ -303,6 +306,8 @@ class formatting_correcter extends pluginSedLex {
 			case 'epc_guidelines': return false			; break ; 
 			case 'epc_epc': return false			; break ; 
 			case 'pct_pct': return false			; break ; 
+
+			case 'advanced_legifrance' : return false			; break ; 
 			
 			case 'list_post_id_to_check': return array()			; break ; 
 			case 'nb_post_to_check'  : return 0 ; break ; 
@@ -342,47 +347,52 @@ class formatting_correcter extends pluginSedLex {
 		foreach ( $res as $r ) {
 			$exclude_ids[] = $r->id_post;
 		}
-
-		// We get a random post 
-		$args = array(
-			'posts_per_page'     => 1,
-			'orderby'         => 'rand',
-			'post__not_in' => $exclude_ids, 
-			'post_type'       => explode(",",$this->get_param('type_page')),
-			'post_status'     => 'publish' );
-
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
+		
+		$all_type = explode(",",$this->get_param('type_page')) ; 
+		$pt = "" ; 
+		foreach ($all_type as $at) {
+			if ($pt != "") {
+				$pt .= " OR " ; 
+			}
+			$pt .= "post_type = '".$at."'" ; 
 		}
+		$ids_posts = $wpdb->get_results( "SELECT ID FROM $wpdb->posts WHERE (".$pt.") AND (post_status='publish' OR post_status='inherit') ORDER BY RAND();" ) ;
 
-		// Reset Post Data
-		wp_reset_postdata();
+		$post_temp = array() ; 
+		foreach ($ids_posts as $i) {
+			if (!in_array($i,$exclude_ids)) {
+				$post_temp[] = $i->ID ; 
+			}
+		}
 		
 		// Si aucun post ne comvient on sort
 		if (empty($post_temp)) {
 			return ; 
 		}
 
-		$text = $post_temp[0]->post_content ; 
 		$id = $post_temp[0]->ID ; 
-						
-		$array_regexp = $this->get_regexp() ; 		
+
+		// Detect formatting issues in the content / description
+		$text = $post_temp[0]->post_content ; 
+		$array_regexp = $this->get_regexp() ;
+		$result1 = $this->split_regexp($text, $array_regexp) ;
 		
-		// Detect formatting issues
-		$result = $this->split_regexp($text, $array_regexp) ;
+		// Detect formatting issues in the except / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
 		
-		
-		$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".floor((count($result)-1)/2)."', NOW())") ;
+		$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($resul3)-1)/2))."', NOW())") ;
 				
 		// we re-authorize a new request 
 		$this->set_param('last_request', time()) ; 
 		 
-		return $id."-".floor((count($result)-1)/2) ; 
+		return $id."-".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($resul3)-1)/2)) ; 
 	}
 	
 	/** ====================================================================================================================================================
@@ -407,8 +417,8 @@ class formatting_correcter extends pluginSedLex {
 
 		$array_text = array(array('text'=>$text, 'status'=>"NORMAL")) ;  
 		
-		if ($this->get_param('advanced_CBE_PCT')) {
-			$array_text = $this->issueWithPCT_CBE($text) ; 
+		if (($this->get_param('advanced_CBE_PCT'))||($this->get_param('advanced_legifrance'))) {
+			$array_text = $this->issueAdvanced($text) ; 
 		}
 				
 		foreach ($array_regexp as $regexp) {
@@ -469,7 +479,7 @@ class formatting_correcter extends pluginSedLex {
 	* @return void
 	*/
 	
-	function issueWithPCT_CBE ($text) {
+	function issueAdvanced ($text) {
 		
 		// Detect all url
 		// 1 - All a tag
@@ -492,8 +502,23 @@ class formatting_correcter extends pluginSedLex {
 			
 			// on regarde si le lien match avec quelquechose
 			
+			// LEGIFRANCE - SUPPRESSION DE JSESSION
+			if (($this->get_param('advanced_legifrance'))&&(preg_match("/http:\/\/www\.legifrance\.gouv\.fr\/(.*)\.do;jsessionid=(.*?)\?(.*)$/i",$out[$i*6+3][0], $match))) {
+				$new_array_text[$j]['text'] .= "<a " ; 
+				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
+				$new_array_text[$j]['text'] .= "href=\"http://www.legifrance.gouv.fr/" ; 
+				$new_array_text[$j]['text'] .= $match[1].".do" ;
+				$j++ ; 
+				$new_array_text[$j] = array('text'=>";jsessionid=".$match[2], 'pos'=>$out[$i*6+3][1]+strlen("http://www.legifrance.gouv.fr/".$match[1].".do"), 'status'=>"DELIMITER", 'new_text'=>"", 'message'=> addslashes(__("Remove the jsession for legifrance links?",$this->pluginID))); 
+				$j++ ; 
+				$new_array_text[$j] = array('text'=>"?".$match[3], 'status'=>"NORMAL"); 
+				$new_array_text[$j]['text'] .=  "\"" ; 
+				$new_array_text[$j]['text'] .= $out[$i*6+4][0] ; 
+				$new_array_text[$j]['text'] .= ">" ; 
+				$new_array_text[$j]['text'] .= $out[$i*6+5][0] ; 
+				$new_array_text[$j]['text'] .= "</a>" ; 
 			// GUIDELINES - SUPPRESSION HTM A LA FIN 
-			if (($this->get_param('epc_guidelines'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/guidelines\/f\/(.*)\.htm(#?.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_guidelines'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/guidelines\/f\/(.*)\.htm(#?.*)$/",$out[$i*6+3][0], $match))) {
 				$new_array_text[$j]['text'] .= "<a " ; 
 				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
 				$new_array_text[$j]['text'] .= "href=\"http://www.epo.org/law-practice/legal-texts/html/guidelines/f/" ; 
@@ -509,7 +534,7 @@ class formatting_correcter extends pluginSedLex {
 				$new_array_text[$j]['text'] .= "</a>" ; 
 				
 			// GUIDELINES - VERIFICATION DU FORMAT
-			} elseif (($this->get_param('epc_guidelines'))&& (preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/guidelines\/f\/(.*)$/",$out[$i*6+3][0],$match))){
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_guidelines'))&& (preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/guidelines\/f\/(.*)$/",$out[$i*6+3][0],$match))){
 				// vérifie si la structure des guidelines est respectée
 				$directive_code = explode("_", $match[1]) ; 
 				if (count($directive_code)>=1) {
@@ -545,7 +570,7 @@ class formatting_correcter extends pluginSedLex {
 				}
 				
 			// EPC 2013 - SUPPRESSION HTM A LA FIN 
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2013\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2013\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
 				$new_array_text[$j]['text'] .= "<a " ; 
 				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
 				$new_array_text[$j]['text'] .= "href=\"http://www.epo.org/law-practice/legal-texts/html/epc/2013/f/" ; 
@@ -561,7 +586,7 @@ class formatting_correcter extends pluginSedLex {
 				$new_array_text[$j]['text'] .= "</a>" ; 
 
 			// EPC 2010 - SUPPRESSION HTM A LA FIN 
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2010\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2010\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
 				$new_array_text[$j]['text'] .= "<a " ; 
 				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
 				$new_array_text[$j]['text'] .= "href=\"http://www.epo.org/law-practice/legal-texts/html/epc/2010/f/" ; 
@@ -577,7 +602,7 @@ class formatting_correcter extends pluginSedLex {
 				$new_array_text[$j]['text'] .= "</a>" ;  			
 			
 			// EPC 1973 - SUPPRESSION HTM A LA FIN 
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/1973\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/1973\/f\/(.*)\.html(#?.*)$/",$out[$i*6+3][0], $match))) {
 				$new_array_text[$j]['text'] .= "<a " ; 
 				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
 				$new_array_text[$j]['text'] .= "href=\"http://www.epo.org/law-practice/legal-texts/html/epc/1973/f/" ; 
@@ -593,7 +618,7 @@ class formatting_correcter extends pluginSedLex {
 				$new_array_text[$j]['text'] .= "</a>" ; 
 	
 			// EPC 2010->2013 - CHANGEMENT CATEGORIE
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2010\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2010\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
 				$new_array_text[$j]['text'] .= "<a " ; 
 				$new_array_text[$j]['text'] .= $out[$i*6+2][0] ; 
 				$new_array_text[$j]['text'] .= "href=\"http://www.epo.org/law-practice/legal-texts/html/epc/" ; 
@@ -609,7 +634,7 @@ class formatting_correcter extends pluginSedLex {
 				$new_array_text[$j]['text'] .= "</a>" ; 
 				
 			// EPC 2013 - VERIF FORMAT URL
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2013\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/2013\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
 				$val = explode("#",$match[1]) ;
 				$num = $val[0] ; 
 				$ancre = "" ;
@@ -760,7 +785,7 @@ class formatting_correcter extends pluginSedLex {
 					}
 				}
 			// EPC 1973 - VERIF FORMAT URL
-			} elseif (($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/1973\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('epc_epc'))&&(preg_match("/www\.epo\.org\/law-practice\/legal-texts\/html\/epc\/1973\/f\/(.*)$/",$out[$i*6+3][0], $match))) {
 				$val = explode("#",$match[1]) ;
 				$num = $val[0] ; 
 				$ancre = "" ;
@@ -1018,7 +1043,7 @@ class formatting_correcter extends pluginSedLex {
 					}
 				}
 			// PCT - VERIF FORMAT URL - RULE
-			} elseif (($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/rules\/(.*)$/",$out[$i*6+3][0], $match))) {
+			} elseif (($this->get_param('advanced_CBE_PCT'))&&($this->get_param('pct_pct'))&&(preg_match("/www\.wipo\.int\/pct\/fr\/texts\/rules\/(.*)$/",$out[$i*6+3][0], $match))) {
 				$val = explode("#",$match[1]) ;
 				$num = str_replace(".htm","",$val[0]) ; 
 				$ancre = "" ;
@@ -1056,6 +1081,7 @@ class formatting_correcter extends pluginSedLex {
 						// Si on a une ancre et qu'elle correspond bien, on determine le nom
 						if (($ancre!="")&&($s_ancre[1]==substr($num,1))){
 							$k=2 ; 
+							$nexthide = false ; 
 							while ($k<count($s_ancre)) {
 								if ($s_ancre[$k]!="") {
 									if (!$nexthide) {
@@ -1142,9 +1168,7 @@ class formatting_correcter extends pluginSedLex {
 							}
 						}
 					}
-				}
-				
-				
+				}				
 			} else {
 				// Si rien ne match, cela veut dire qu'il faut considerer que c'est un text normal
 				$new_array_text[$j]['text'] .= $out[$i*6+1][0] ; 
@@ -1172,8 +1196,8 @@ class formatting_correcter extends pluginSedLex {
 	public function configuration_page() {
 		global $wpdb;
 		global $blog_id ; 
-		
-		SL_Debug::log(get_class(), "Print the configuration page." , 4) ; 
+				
+		SLFramework_Debug::log(get_class(), "Print the configuration page." , 4) ; 
 		
 		// Si on change les paramètres, on supprime les entrées
 		if (isset($_POST['submitOptions'])) {
@@ -1199,13 +1223,12 @@ class formatting_correcter extends pluginSedLex {
 			//===============================================================================================
 			// After this comment, you may modify whatever you want
 			?>
-			<p><?php echo __("This is the configuration page of the plugin", $this->pluginID) ;?></p>
 			<?php
 			
 			// We check rights
 			$this->check_folder_rights( array(array(WP_CONTENT_DIR."/sedlex/test/", "rwx")) ) ;
 			
-			$tabs = new adminTabs() ; 
+			$tabs = new SLFramework_Tabs() ; 
 			
 			ob_start() ; 
 				
@@ -1226,7 +1249,7 @@ class formatting_correcter extends pluginSedLex {
 			$tabs->add_tab(__('Formatting Issues',  $this->pluginID), ob_get_clean()) ; 	
 
 			ob_start() ; 
-				$params = new parametersSedLex($this, "tab-parameters") ; 
+				$params = new SLFramework_Parameters($this, "tab-parameters") ; 
 				$params->add_title(__('Typical formating issues',  $this->pluginID)) ; 
 				$params->add_param('remove_double_space', __('Double-space:',  $this->pluginID)) ; 
 				$params->add_comment(__("This option detects double space in your text",  $this->pluginID)) ; 
@@ -1244,7 +1267,9 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('remove_nbsp', __('Incorrect non-breaking space according French rules:',  $this->pluginID)) ; 
 				$params->add_comment(__("This option removes non breaking space that are not before punctuation marks.",  $this->pluginID)) ; 
 				$params->add_param('space_after_comma', __('Add a space after a comma and remove it before:',  $this->pluginID)) ; 
-				
+				$params->add_param('strange_accentuation', __('Correct the diacritics accentuated characters:',  $this->pluginID)) ; 
+				$params->add_comment(__("In UTF8, there is two ways for coding accentuated characters: the diatrics way is not very well supported by browsers for now and the accentuated characters may appears as two characters (a non-accentuated one and an accent character).",  $this->pluginID)) ; 
+
 				$params->add_title_macroblock(__('Custom issues %s',  $this->pluginID), __('Add a new custom regexp for a custom issue',  $this->pluginID)) ; 
 				$params->add_param('regex_error', __('Custom regexp to detect a formatting issue:',  $this->pluginID)) ; 
 				$params->add_comment(__("This regexp is used to detect formating issue in your posts",  $this->pluginID)) ; 
@@ -1255,6 +1280,7 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('between_two_requests', __('Minimum interval bewteen two checks (in minutes):',  $this->pluginID)) ; 
 				$params->add_param('shorten_normal', __('Shorten article when displayed in the backend:',  $this->pluginID)) ; 
 				$params->add_param('type_page', __('Types of page/post to be checked:',  $this->pluginID)) ; 
+				$params->add_comment(sprintf(__("You can type for instance %s or %s.",  $this->pluginID), "<code>page,post</code>", "<code>page,post,attachment</code>")) ; 
 				$params->add_param('show_nb', __('Display the number of issues in the left column:',  $this->pluginID),"","",array('show_nb_error')) ; 
 				$params->add_param('show_nb_error', __('If this is checked, display the total number of issues, if not, display only the number of posts with at least one issue:',  $this->pluginID)) ; 
 				$params->add_param('max_page_to_check', __('When forced, how many posts is to be checked?',  $this->pluginID)) ; 
@@ -1262,6 +1288,7 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('epc_guidelines', __('Detect issues on EPC guidelines links',  $this->pluginID));
 				$params->add_param('epc_epc', __('Detect issues on EPC articles/rules links',  $this->pluginID));
 				$params->add_param('pct_pct', __('Detect issues on PCT articles/rules links',  $this->pluginID));
+				$params->add_param('advanced_legifrance', __('Advanced Legifrance link formatting link (normally, do not activate this option)',  $this->pluginID),"","",array()) ; 
 				
 				//$params->add_param('avoid_multiple_revisions', __('Avoid creating a revision for each single modifications you validate:',  $this->pluginID)) ; 
 
@@ -1269,18 +1296,48 @@ class formatting_correcter extends pluginSedLex {
 				
 			$tabs->add_tab(__('Parameters',  $this->pluginID), ob_get_clean() , plugin_dir_url("/").'/'.str_replace(basename(__FILE__),"",plugin_basename(__FILE__))."core/img/tab_param.png") ; 	
 			
+			// HOW To
+			ob_start() ;
+				echo "<p>".__("This plugin is designed to detect usual typographic issues and to propose corrections for these issues.", $this->pluginID)."</p>" ; 
+			$howto1 = new SLFramework_Box (__("Purpose of that plugin", $this->pluginID), ob_get_clean()) ; 
+			ob_start() ;
+				echo "<p>".__("The plugin proposes a number of option to identify the formatting issues.", $this->pluginID)."</p>" ; 
+				echo "<p>".__("Just have a look in the configuration tab: it is quite self-explanatory....", $this->pluginID)."</p>" ; 
+				echo "<p>".__("You also may add you own regular expressions to identify custom issues", $this->pluginID)."</p>" ; 
+			$howto2 = new SLFramework_Box (__("How to configure the plugin?", $this->pluginID), ob_get_clean()) ; 
+			ob_start() ;
+				echo "<p>".__("There is two different ways to look for formatting issue:", $this->pluginID)."</p>" ; 
+				echo "<ul style='list-style-type: disc;padding-left:40px;'>" ; 
+					echo "<li><p>".__("an automatic process (namely background process):", $this->pluginID)."</p></li>" ; 
+						echo "<ul style='list-style-type: circle;padding-left:40px;'>" ; 
+							echo "<li><p>".__("Every time a user visits a page of the frontside of your website, an unverified post/page is verified;", $this->pluginID)."</p></li>" ; 
+							echo "<li><p>".__("Note that if you have very few visits, a complete review of your articles may be quite long.", $this->pluginID)."</p></li>" ; 
+						echo "</ul>" ;
+					echo "<li><p>".__("a forced process:", $this->pluginID)."</p></li>" ; 
+						echo "<ul style='list-style-type: circle;padding-left:40px;'>" ; 
+							echo "<li><p>".__("The button that triggers this forced process may be found in the Formatting issues tab;", $this->pluginID)."</p></li>" ; 
+							echo "<li><p>".__("You have to stay on that page for processing all posts/pages: if you go on another page (or if you reload the page), the process will be stopped.", $this->pluginID)."</p></li>" ; 
+						echo "</ul>" ;				
+				echo "</ul>" ; 
+			$howto3 = new SLFramework_Box (__("How to backup the site?", $this->pluginID), ob_get_clean()) ; 
+			ob_start() ; 
+				 echo $howto1->flush() ; 
+				 echo $howto2->flush() ; 
+				 echo $howto3->flush() ; 
+			$tabs->add_tab(__('How To',  $this->pluginID), ob_get_clean() , plugin_dir_url("/").'/'.str_replace(basename(__FILE__),"",plugin_basename(__FILE__))."core/img/tab_how.png") ; 	
+
 			$frmk = new coreSLframework() ;  
 			if (((is_multisite())&&($blog_id == 1))||(!is_multisite())||($frmk->get_param('global_allow_translation_by_blogs'))) {
 				ob_start() ; 
 					$plugin = str_replace("/","",str_replace(basename(__FILE__),"",plugin_basename( __FILE__))) ; 
-					$trans = new translationSL($this->pluginID, $plugin) ; 
+					$trans = new SLFramework_Translation($this->pluginID, $plugin) ; 
 					$trans->enable_translation() ; 
 				$tabs->add_tab(__('Manage translations',  $this->pluginID), ob_get_clean() , plugin_dir_url("/").'/'.str_replace(basename(__FILE__),"",plugin_basename(__FILE__))."core/img/tab_trad.png") ; 	
 			}
 
 			ob_start() ; 
 				$plugin = str_replace("/","",str_replace(basename(__FILE__),"",plugin_basename( __FILE__))) ; 
-				$trans = new feedbackSL($plugin, $this->pluginID) ; 
+				$trans = new SLFramework_Feedback($plugin, $this->pluginID) ; 
 				$trans->enable_feedback() ; 
 			$tabs->add_tab(__('Give feedback',  $this->pluginID), ob_get_clean() , plugin_dir_url("/").'/'.str_replace(basename(__FILE__),"",plugin_basename(__FILE__))."core/img/tab_mail.png") ; 	
 			
@@ -1288,7 +1345,7 @@ class formatting_correcter extends pluginSedLex {
 				// A list of plugin slug to be excluded
 				$exlude = array('wp-pirate-search') ; 
 				// Replace sedLex by your own author name
-				$trans = new otherPlugins("sedLex", $exlude) ; 
+				$trans = new SLFramework_OtherPlugins("sedLex", $exlude) ; 
 				$trans->list_plugins() ; 
 			$tabs->add_tab(__('Other plugins',  $this->pluginID), ob_get_clean() , plugin_dir_url("/").'/'.str_replace(basename(__FILE__),"",plugin_basename(__FILE__))."core/img/tab_plug.png") ; 	
 			
@@ -1309,7 +1366,7 @@ class formatting_correcter extends pluginSedLex {
 	* @return string
 	*/
 	
-	function display_split_regexp($result, $id) {
+	function display_split_regexp($result, $id, $place="post_content") {
 		$num = 1 ; 
 		$solu = "" ;
 		foreach ($result as $r) {
@@ -1350,8 +1407,8 @@ class formatting_correcter extends pluginSedLex {
 				$new_text = str_replace("\r",'', $new_text) ; 
 				$new_text = str_replace("\n",'<br/>', $new_text) ;
 
-				$solu .=  '<span style="background-color:#FFBBBB;color:#770000;min-width:20px;padding-left:4px;padding-right:4px;text-decoration:line-through;" onclick="replaceTextInPost(\''.str_replace("'", " ",$r['message']).'\', '.$id.', '.$num.', '.$r['pos'].');">'.$text.'</span>' ; 
-				$solu .=  '<span style="background-color:#BBFFBB;color:#007700;min-width:20px;padding-left:4px;padding-right:4px;text-decoration:underline;" onclick="replaceTextInPost(\''.str_replace("'", " ",$r['message']).'\', '.$id.', '.$num.', '.$r['pos'].');">'.$new_text.'</span>' ; 
+				$solu .=  '<span style="background-color:#FFBBBB;color:#770000;min-width:20px;padding-left:4px;padding-right:4px;text-decoration:line-through;" onclick="replaceTextInPost(\''.str_replace("'", " ",$r['message']).'\', '.$id.', '.$num.', '.$r['pos'].', \''.$place.'\');">'.$text.'</span>' ; 
+				$solu .=  '<span style="background-color:#BBFFBB;color:#007700;min-width:20px;padding-left:4px;padding-right:4px;text-decoration:underline;" onclick="replaceTextInPost(\''.str_replace("'", " ",$r['message']).'\', '.$id.', '.$num.', '.$r['pos'].', \''.$place.'\');">'.$new_text.'</span>' ; 
 				$num ++ ; 
 			}
 		}
@@ -1388,6 +1445,7 @@ class formatting_correcter extends pluginSedLex {
 		}
 		
 		if ($this->get_param('remove_incorrect_quote')) {
+			$regexp_norm[] = array('found'=>"(«[\s]|[\s]»|&#171;[\s]|[\s]&#187;)", 'replace'=>'"', 'message'=>__("Replace this double non-standard quote?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"(«|»|“|”|„|&#171;|&#187;|&#8220;|&#8221;|&#8222;)", 'replace'=>'"', 'message'=>__("Replace this double non-standard quote?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"(`|´|‘|’|‚|&#96;|&#180;|&#8216;|&#8217;|&#8218;)", 'replace'=>"'", 'message'=>__("Replace this single non-standard quote?", $this->pluginID))  ; 
 		}
@@ -1407,6 +1465,85 @@ class formatting_correcter extends pluginSedLex {
 		if ($this->get_param('french_punctuations')) {
 			$regexp_norm[] = array('found'=>"([^&!?:;,.%]) ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"([^&]{6}[^&!?:;,.%]{2})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
+		}
+		
+		if ($this->get_param('strange_accentuation')) {
+			// a
+			$regexp_norm[] = array('found'=>"\x61\xCC\x81", 'replace'=>'á', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x61\xCC\x80", 'replace'=>'à', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x61\xCC\x82", 'replace'=>'â', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x61\xCC\x83", 'replace'=>'ã', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x61\xCC\x88", 'replace'=>'ä', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// A
+			$regexp_norm[] = array('found'=>"\x41\xCC\x81", 'replace'=>'À', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x41\xCC\x80", 'replace'=>'Á', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x41\xCC\x82", 'replace'=>'Â', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x41\xCC\x83", 'replace'=>'Ã', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x41\xCC\x88", 'replace'=>'Ä', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// c
+			$regexp_norm[] = array('found'=>"\x63\xCC\xA7", 'replace'=>'ç', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 			
+			// C
+			$regexp_norm[] = array('found'=>"\x43\xCC\xA7", 'replace'=>'Ç', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 			
+			// e
+			$regexp_norm[] = array('found'=>"\x65\xCC\x81", 'replace'=>'é', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x65\xCC\x80", 'replace'=>'è', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x65\xCC\x82", 'replace'=>'ê', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x65\xCC\x88", 'replace'=>'ë', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// E
+			$regexp_norm[] = array('found'=>"\x45\xCC\x81", 'replace'=>'É', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x45\xCC\x80", 'replace'=>'È', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x45\xCC\x82", 'replace'=>'Ê', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x45\xCC\x88", 'replace'=>'Ë', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// i
+			$regexp_norm[] = array('found'=>"\x69\xCC\x81", 'replace'=>'í', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x69\xCC\x80", 'replace'=>'ì', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x69\xCC\x82", 'replace'=>'î', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x69\xCC\x88", 'replace'=>'ï', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// I
+			$regexp_norm[] = array('found'=>"\x49\xCC\x81", 'replace'=>'Í', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x49\xCC\x80", 'replace'=>'Ì', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x49\xCC\x82", 'replace'=>'Î', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x49\xCC\x88", 'replace'=>'Ï', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// n
+			$regexp_norm[] = array('found'=>"\x6E\xCC\x83", 'replace'=>'ñ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// N
+			$regexp_norm[] = array('found'=>"\x4E\xCC\x83", 'replace'=>'Ñ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// o
+			$regexp_norm[] = array('found'=>"\x6F\xCC\x81", 'replace'=>'ó', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x6F\xCC\x80", 'replace'=>'ò', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x6F\xCC\x82", 'replace'=>'ô', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x6F\xCC\x83", 'replace'=>'õ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x6F\xCC\x88", 'replace'=>'ö', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// o
+			$regexp_norm[] = array('found'=>"\x4F\xCC\x81", 'replace'=>'Ó', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x4F\xCC\x80", 'replace'=>'Ò', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x4F\xCC\x82", 'replace'=>'Ô', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x4F\xCC\x83", 'replace'=>'Õ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x4F\xCC\x88", 'replace'=>'Ö', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// s
+			$regexp_norm[] = array('found'=>"\x73\xCC\x8c", 'replace'=>'š', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// S
+			$regexp_norm[] = array('found'=>"\x53\xCC\x8c", 'replace'=>'Š', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// u
+			$regexp_norm[] = array('found'=>"\x75\xCC\x81", 'replace'=>'ú', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x75\xCC\x80", 'replace'=>'ù', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x75\xCC\x82", 'replace'=>'û', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x75\xCC\x88", 'replace'=>'ü', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// U
+			$regexp_norm[] = array('found'=>"\x55\xCC\x81", 'replace'=>'Ú', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x55\xCC\x80", 'replace'=>'Ù', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x55\xCC\x82", 'replace'=>'Û', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x55\xCC\x88", 'replace'=>'Ü', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// y
+			$regexp_norm[] = array('found'=>"\x79\xCC\x81", 'replace'=>'ý', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x79\xCC\x88", 'replace'=>'ÿ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// Y
+			$regexp_norm[] = array('found'=>"\x59\xCC\x81", 'replace'=>'Ý', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			$regexp_norm[] = array('found'=>"\x59\xCC\x88", 'replace'=>'Ÿ', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// z
+			$regexp_norm[] = array('found'=>"\x7A\xCC\x8c", 'replace'=>'ž', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
+			// Z
+			$regexp_norm[] = array('found'=>"\x5A\xCC\x8c", 'replace'=>'Ž', 'message'=>__("Replace the diacritic accentuated characters with a correct one?", $this->pluginID))  ; 
 		}
 		
 		$regexp_found = $this->get_param_macro('regex_error') ; 
@@ -1437,57 +1574,57 @@ class formatting_correcter extends pluginSedLex {
 			die() ; 
 		} 
 		
-		// We get the post
-		$args = array(
-				'p'=>$id,
-				'post_type' => 'any'
-		) ; 
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
-		}
-
-		// Reset Post Data
-		wp_reset_postdata();
+		$post_temp[0] = get_post($id) ; 
 		
+		// Detect formatting issues in the excerpt / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result2, $id, 'post_excerpt')."</code>" ;
+			echo "</div>" ; 
+		$box2 = new SLFramework_Box(__("Formating issue for the excerpt / caption", $this->pluginID), ob_get_clean()) ; 
 
-		$text = $post_temp[0]->post_content ; 
-								
-		$array_regexp = $this->get_regexp() ; 		
-		
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result3, $id, 'post_title')."</code>" ;
+			echo "</div>" ; 
+		$box3 = new SLFramework_Box(__("Formating issue for the title", $this->pluginID), ob_get_clean()) ; 
 		
 		// SHOW FORMATING ISSUES AND PROPOSE SOLUTION 
-		$result = $this->split_regexp($text, $array_regexp) ;
+		$text = $post_temp[0]->post_content ; 
+		$array_regexp = $this->get_regexp() ; 		
+		$result1 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result1, $id, 'post_content')."</code>" ;
+			echo "</div>" ; 
+		$box1 = new SLFramework_Box(__("Formating issue for the content / description", $this->pluginID), ob_get_clean()) ; 
 		
 		ob_start() ; 
-		
-			echo "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
-
-			echo "<div id='proposed_modifications'>" ; 
-			echo "<div id='wait_proposed_modifications' style='display: none;'>" ; 
-			echo "<img src='".WP_PLUGIN_URL."/".str_replace(basename(__FILE__),"",plugin_basename( __FILE__))."core/img/ajax-loader.gif'>" ; 
-			echo "</div>" ; 
-			echo "<div id='text_with_proposed_modifications'>" ; 
-		
-			echo "<code>".$this->display_split_regexp($result, $id)."</code>" ;
-
-			echo "<p>&nbsp;</p>" ; 
 			echo "<div>" ; 
 			echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
 			echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
 			echo "</div>" ; 
-			echo "<p>&nbsp;</p>" ; 
+			echo "<p>&nbsp;</p>" ;
+		$fin = ob_get_clean() ; 
 		
-			echo "</div>" ; 
-			
-			echo "</div>" ; 
-			
-		$content = ob_get_clean() ; 
-		$popup = new popupAdmin (sprintf(__("View the formatting issue for %s", $this->pluginID),"<i>'".get_the_title($id)."'</i>"), $content, "", "window.location.href=window.location.href;") ; 
+		$content = 	"<div id='proposed_modifications'>" ; 
+		$content .= "<div id='wait_proposed_modifications' style='display: none;'>" ; 
+		$content .= "<img src='".WP_PLUGIN_URL."/".str_replace(basename(__FILE__),"",plugin_basename( __FILE__))."core/img/ajax-loader.gif'>" ; 
+		$content .= "</div>" ; 
+		$content .= "<div id='text_with_proposed_modifications'>" ; 
+		$content .=  "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
+		$content .= $box3->flush().$box2->flush().$box1->flush().$fin ; 
+		$content .= "</div>" ; 
+		$content .= "</div>" ; 
+
+		$popup = new SLFramework_Popup (sprintf(__("View the formatting issue for %s", $this->pluginID),"<i>'".get_the_title($id)."'</i>"), $content, "", "window.location.href=window.location.href;") ; 
 		echo $popup->render() ; 
 		
 		die() ; 
@@ -1509,88 +1646,182 @@ class formatting_correcter extends pluginSedLex {
 			echo "Go away: NUM is not an integer" ; 
 			die() ; 
 		} 
+		$zone = $_POST['zone'] ; 
+		if (($zone!="post_excerpt")&&($zone!="post_title")) {
+			$zone = "post_content" ; 
+		} 
+
 		$pos = $_POST['pos'] ; 
 		if ((!is_numeric($pos))&&($pos!="ALL")) {
 			echo "Go away: POS is not an integer" ; 
 			die() ; 
 		} 
 		
-		// We get the post 
-		$args = array(
-				'p'=>$id,
-				'post_type' => 'any'
-		) ; 
+		$post_temp[0] = get_post($id) ; 
 		
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
-		}
-
-		// Reset Post Data
-		wp_reset_postdata();
-
-		$text = $post_temp[0]->post_content ; 
-								
-		$array_regexp = $this->get_regexp() ; 
+		$toBeUpdated = false ; 
 		
-		// SHOW FORMATING ISSUES AND PROPOSE SOLUTION 
-		$result = $this->split_regexp($text, $array_regexp) ;
-		
-		$new_string = "" ; 
-		
-		$numVerif = 1 ; 
-		foreach ($result as $r) {
-			if ($r['status']=="NORMAL") {
-				$new_string .= $r['text'] ; 
-			}
-			if ($r['status']!="NORMAL") {
-				if (($numVerif == $num)||($num=="ALL")) {
-					if (($r['pos']==$pos)||($pos=="ALL")) {
-						$new_string .=  $r['new_text'] ; 
-					} else {
-						echo sprintf(__('ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character.',$this->pluginID), $num, $pos, $r['pos']) ; 
-						die() ; 
-					}
-				} else {
-					$new_string .=  $r['text'] ; 
+		// CONTENT
+		if (($zone=="post_content")||($num=="ALL")) {
+			$text = $post_temp[0]->post_content ; 
+			
+			$array_regexp = $this->get_regexp() ; 		
+			$result = $this->split_regexp($text, $array_regexp) ;
+			$new_string = "" ; 
+			$numVerif = 1 ; 
+			foreach ($result as $r) {
+				if ($r['status']=="NORMAL") {
+					$new_string .= $r['text'] ; 
 				}
+				if ($r['status']!="NORMAL") {
+					if (($numVerif == $num)||($num=="ALL")) {
+						if (($r['pos']==$pos)||($pos=="ALL")) {
+							$new_string .=  $r['new_text'] ; 
+						} else {
+							echo sprintf(__('ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character.',$this->pluginID), $num, $pos, $r['pos']) ; 
+							die() ; 
+						}
+					} else {
+						$new_string .=  $r['text'] ; 
+					}
 				
-				$numVerif ++ ; 
+					$numVerif ++ ; 
+				}
+			}
+			if ($new_string != "") {
+				$post_temp[0]->post_content = $new_string ; 
+				$toBeUpdated = true ; 
 			}
 		}
-		if ($new_string != "") {
-			$post_temp[0]->post_content = $new_string ; 
+		
+		// TITLE
+		
+		if (($zone=="post_title")||($num=="ALL")) {
+			$text = $post_temp[0]->post_title ; 
 			
-			if ($this->get_param("avoid_multiple_revisions")) {
-			//	remove_action('pre_post_update', 'wp_save_post_revision');
+			$array_regexp = $this->get_regexp() ; 		
+			$result = $this->split_regexp($text, $array_regexp) ;
+			$new_string = "" ; 
+			$numVerif = 1 ; 
+			foreach ($result as $r) {
+				if ($r['status']=="NORMAL") {
+					$new_string .= $r['text'] ; 
+				}
+				if ($r['status']!="NORMAL") {
+					if (($numVerif == $num)||($num=="ALL")) {
+						if (($r['pos']==$pos)||($pos=="ALL")) {
+							$new_string .=  $r['new_text'] ; 
+						} else {
+							echo sprintf(__('ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character.',$this->pluginID), $num, $pos, $r['pos']) ; 
+							die() ; 
+						}
+					} else {
+						$new_string .=  $r['text'] ; 
+					}
+				
+					$numVerif ++ ; 
+				}
 			}
+			if ($new_string != "") {
+				$post_temp[0]->post_title = $new_string ; 
+				$toBeUpdated = true ; 
+			}
+		}
+		
+		// EXCERPT
+		
+		if (($zone=="post_excerpt")||($num=="ALL")) {
+			$text = $post_temp[0]->post_excerpt ; 
 			
+			$array_regexp = $this->get_regexp() ; 		
+			$result = $this->split_regexp($text, $array_regexp) ;
+			$new_string = "" ; 
+			$numVerif = 1 ; 
+			foreach ($result as $r) {
+				if ($r['status']=="NORMAL") {
+					$new_string .= $r['text'] ; 
+				}
+				if ($r['status']!="NORMAL") {
+					if (($numVerif == $num)||($num=="ALL")) {
+						if (($r['pos']==$pos)||($pos=="ALL")) {
+							$new_string .=  $r['new_text'] ; 
+						} else {
+							echo sprintf(__('ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character.',$this->pluginID), $num, $pos, $r['pos']) ; 
+							die() ; 
+						}
+					} else {
+						$new_string .=  $r['text'] ; 
+					}
+				
+					$numVerif ++ ; 
+				}
+			}
+			if ($new_string != "") {
+				$post_temp[0]->post_excerpt = $new_string ; 
+				$toBeUpdated = true ; 
+			}
+		}
+		
+		if ($toBeUpdated) {
+			if ($this->get_param("avoid_multiple_revisions")) {
+				//remove_action('pre_post_update', 'wp_save_post_revision');
+			}
+		
 			remove_action('save_post', array($this, 'whenPostIsSaved'));
 			wp_update_post( $post_temp[0] );
 			add_action('save_post', array($this, 'whenPostIsSaved'));
-			
-			if ($this->get_param("avoid_multiple_revisions")) {
-			//	add_action('pre_post_update', 'wp_save_post_revision');
-			}
-		}
 		
-		$result = $this->split_regexp($new_string, $array_regexp) ;
+			if ($this->get_param("avoid_multiple_revisions")) {
+				//add_action('pre_post_update', 'wp_save_post_revision');
+			}
+		}				
+		
+		
+		// Detect formatting issues in the excerpt / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result2, $id, 'post_excerpt')."</code>" ;
+			echo "</div>" ; 
+		$box2 = new SLFramework_Box(__("Formating issue for the excerpt / caption", $this->pluginID), ob_get_clean()) ; 
+
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result3, $id, 'post_title')."</code>" ;
+			echo "</div>" ; 
+		$box3 = new SLFramework_Box(__("Formating issue for the title", $this->pluginID), ob_get_clean()) ; 
+		
+		// SHOW FORMATING ISSUES AND PROPOSE SOLUTION 
+		$text = $post_temp[0]->post_content ; 
+		$array_regexp = $this->get_regexp() ; 		
+		$result1 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result1, $id, 'post_content')."</code>" ;
+			echo "</div>" ; 
+		$box1 = new SLFramework_Box(__("Formating issue for the content / description", $this->pluginID), ob_get_clean()) ; 
+		
+		ob_start() ; 
+			echo "<div>" ; 
+			echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+			echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+			echo "</div>" ; 
+			echo "<p>&nbsp;</p>" ;
+		$fin = ob_get_clean() ; 
+		
+		$content =  "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
+		$content .= $box3->flush().$box2->flush().$box1->flush().$fin ; 
+		
+		echo $content ; 
 		
 		// We update the database so that the number of error is correct
-		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."', date_check=NOW() WHERE id_post='".$id."'") ; 		
-
-		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
-		
-		echo "<p>&nbsp;</p>" ; 
-		echo "<div>" ; 
-		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
-		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
-		echo "</div>" ; 
-		echo "<p>&nbsp;</p>" ; 
+		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', date_check=NOW() WHERE id_post='".$id."'") ; 		
 		
 		die() ; 
 	}
@@ -1607,23 +1838,7 @@ class formatting_correcter extends pluginSedLex {
 			die() ; 
 		}
 		
-		// We get the post 
-		$args = array(
-				'p'=>$id,
-				'post_type' => 'any'
-		) ; 
-		
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
-		}
-
-		// Reset Post Data
-		wp_reset_postdata();
+		$post_temp[0] = get_post($id) ; 
 
 		$text = $post_temp[0]->post_content ; 
 		
@@ -1651,38 +1866,51 @@ class formatting_correcter extends pluginSedLex {
 			die() ; 
 		} 
 		
-		// We get the post 
-		$args = array(
-				'p'=>$id,
-				'post_type' => 'any'
-		) ; 
+		$post_temp[0] = get_post($id) ; 
+
+		// Detect formatting issues in the excerpt / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result2, $id, 'post_excerpt')."</code>" ;
+			echo "</div>" ; 
+		$box2 = new SLFramework_Box(__("Formating issue for the excerpt / caption", $this->pluginID), ob_get_clean()) ; 
+
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result3, $id, 'post_title')."</code>" ;
+			echo "</div>" ; 
+		$box3 = new SLFramework_Box(__("Formating issue for the title", $this->pluginID), ob_get_clean()) ; 
 		
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
-		}
-
-		// Reset Post Data
-		wp_reset_postdata();
-
+		// SHOW FORMATING ISSUES AND PROPOSE SOLUTION 
 		$text = $post_temp[0]->post_content ; 
-								
-		$array_regexp = $this->get_regexp() ; 
+		$array_regexp = $this->get_regexp() ; 		
+		$result1 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result1, $id, 'post_content')."</code>" ;
+			echo "</div>" ; 
+		$box1 = new SLFramework_Box(__("Formating issue for the content / description", $this->pluginID), ob_get_clean()) ; 
 		
-		$result = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div>" ; 
+			echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+			echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+			echo "</div>" ; 
+			echo "<p>&nbsp;</p>" ;
+		$fin = ob_get_clean() ; 
 		
-		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
+		$content =  "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
+		$content .= $box3->flush().$box2->flush().$box1->flush().$fin ; 
 		
-		echo "<p>&nbsp;</p>" ; 
-		echo "<div>" ; 
-		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
-		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
-		echo "</div>" ; 
-		echo "<p>&nbsp;</p>" ; 
+		echo $content ; 
+		
 		
 		die() ; 
 	}
@@ -1700,26 +1928,9 @@ class formatting_correcter extends pluginSedLex {
 			echo "Go away: ID is not an integer" ; 
 			die() ; 
 		} 
-		//$text = html_entity_decode(stripslashes($_POST['text']), ENT_COMPAT, 'UTF-8') ; 
 		$text = stripslashes($_POST['text']) ; 
 		
-		// We get the post 
-		$args = array(
-				'p'=>$id,
-				'post_type' => 'any'
-		) ; 
-		
-		$myQuery = new WP_Query( $args ); 
-
-		//Looping through the posts
-		$post_temp = array() ; 
-		while ( $myQuery->have_posts() ) {
-			$myQuery->the_post();
-			$post_temp[] = $post;
-		}
-
-		// Reset Post Data
-		wp_reset_postdata();
+		$post_temp[0] = get_post($id) ; 
 		
 		$array_regexp = $this->get_regexp() ; 
 		
@@ -1729,24 +1940,51 @@ class formatting_correcter extends pluginSedLex {
 		wp_update_post( $post_temp[0] );
 		add_action('save_post', array($this, 'whenPostIsSaved'));
 		
-		//$result = $this->split_regexp($text, $array_regexp) ;
-		//echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
-		//echo "</p>####</p>" ; 
+		// Detect formatting issues in the excerpt / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result2, $id, 'post_excerpt')."</code>" ;
+			echo "</div>" ; 
+		$box2 = new SLFramework_Box(__("Formating issue for the excerpt / caption", $this->pluginID), ob_get_clean()) ; 
 
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result3, $id, 'post_title')."</code>" ;
+			echo "</div>" ; 
+		$box3 = new SLFramework_Box(__("Formating issue for the title", $this->pluginID), ob_get_clean()) ; 
 		
-		$result = $this->split_regexp($post_temp[0]->post_content, $array_regexp) ;
+		// SHOW FORMATING ISSUES AND PROPOSE SOLUTION 
+		$text = $post_temp[0]->post_content ; 
+		$array_regexp = $this->get_regexp() ; 		
+		$result1 = $this->split_regexp($text, $array_regexp) ;
+		ob_start() ; 
+			echo "<div id='proposed_modifications'>" ; 
+			echo "<code>".$this->display_split_regexp($result1, $id, 'post_content')."</code>" ;
+			echo "</div>" ; 
+		$box1 = new SLFramework_Box(__("Formating issue for the content / description", $this->pluginID), ob_get_clean()) ; 
 		
+		ob_start() ; 
+			echo "<div>" ; 
+			echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
+			echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
+			echo "</div>" ; 
+			echo "<p>&nbsp;</p>" ;
+		$fin = ob_get_clean() ; 
+		
+		$content =  "<p>".__("Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click.", $this->pluginID)."</p>" ;
+		$content .= $box3->flush().$box2->flush().$box1->flush().$fin ; 
+		
+		echo $content ; 
+				
 		// We update the database so that the number of error is correct
-		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."' WHERE id_post='".$id."'") ; 		
-
-		echo "<code>".$this->display_split_regexp($result, $id)."</code>" ; 
-		
-		echo "<p>&nbsp;</p>" ; 
-		echo "<div>" ; 
-		echo "<input name='validAllIssue' class='button-primary validButton' value='".str_replace("'", "", __("Accept all propositions", $this->pluginID))."' type='button' onclick='validAllIssue(\"".str_replace("\\","",str_replace("'","",str_replace("\"","",__("Sure to modify all issues with the proposed modifications?", $this->pluginID))))."\", \"".$id."\")'>" ; 
-		echo "&nbsp;<input name='Edit mode' class='button validButton' value='".str_replace("'", "", __("Edit the text", $this->pluginID))."' type='button' onclick='showEditor(".$id.")'>" ; 
-		echo "</div>" ; 
-		echo "<p>&nbsp;</p>" ; 
+		$wpdb->query("UPDATE ".$this->table_name." SET numerror='".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."' WHERE id_post='".$id."'") ; 		
 		
 		die() ; 
 	}
@@ -1773,6 +2011,31 @@ class formatting_correcter extends pluginSedLex {
 		global $wpdb ; 
 		// We delete the entries
 		$wpdb->query("DELETE FROM ".$this->table_name." WHERE id_post='".$id."'") ; 
+		
+		// We recheck immediately
+		$post_temp = get_post($id) ; 
+		if ($post_temp!==null) {
+			// On ne fait rien si c'est une révision
+			if (!wp_is_post_revision($post_temp)) {
+				
+				// Detect formatting issues in the content / description
+				$text = $post_temp->post_content ; 
+				$array_regexp = $this->get_regexp() ;
+				$result1 = $this->split_regexp($text, $array_regexp) ;
+		
+				// Detect formatting issues in the except / caption
+				$text = $post_temp->post_excerpt ; 
+				$array_regexp = $this->get_regexp() ;
+				$result2 = $this->split_regexp($text, $array_regexp) ;
+
+				// Detect formatting issues in the title 
+				$text = $post_temp->post_title ; 
+				$array_regexp = $this->get_regexp() ;
+				$result3 = $this->split_regexp($text, $array_regexp) ;
+				
+				$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', NOW())") ;
+			}
+		}
 	}
 	
 	/** ====================================================================================================================================================
@@ -1819,27 +2082,22 @@ class formatting_correcter extends pluginSedLex {
 		// Initialize the list
 		$at = $this->get_param('list_post_id_to_check') ; 
 		if (empty($at)) {
-			// We get the post 
-			$args = array(
-				'posts_per_page'     => intval($this->get_param('max_page_to_check')),
-				'orderby'         => 'rand',
-				'post_type'       => explode(",",$this->get_param('type_page')),
-				'fields'        => 'ids',
-				'post_status'     => 'publish' 
-			);
 			
-			$myQuery = new WP_Query( $args ); 
-
-
-			//Looping through the posts
-			$post_temp = array() ; 
-			while ( $myQuery->have_posts() ) {
-				$myQuery->the_post();
-				$post_temp[] = $post;
+			$all_type = explode(",",$this->get_param('type_page')) ; 
+			$pt = "" ; 
+			foreach ($all_type as $atxxx) {
+				if ($pt != "") {
+					$pt .= " OR " ; 
+				}
+				$pt .= "post_type = '".$atxxx."'" ; 
 			}
+			$ids_posts = $wpdb->get_results( "SELECT ID FROM $wpdb->posts WHERE (".$pt.") AND (post_status='publish' OR post_status='inherit') ORDER BY RAND() LIMIT 0,".intval($this->get_param('max_page_to_check')).";" ) ;
 
-			// Reset Post Data
-			wp_reset_postdata();
+			$post_temp = array() ; 
+			foreach ($ids_posts as $i) {
+				$post_temp[] = $i->ID ; 
+			}
+			
 			$this->set_param('list_post_id_to_check', $post_temp) ; 
 			$this->set_param('nb_post_to_check', count($post_temp)) ; 
 		}
@@ -1849,22 +2107,29 @@ class formatting_correcter extends pluginSedLex {
 		$pid = array_pop($post_temp) ; 
 		$this->set_param('list_post_id_to_check', $post_temp) ; 
 		
-		$post_to_check = get_post($pid) ; 
+		$post_temp[0] = get_post($pid) ; 
 		
-		// We check
-		$text = $post_to_check->post_content ; 						
-		$array_regexp = $this->get_regexp() ; 		
+		// Detect formatting issues in the content / description
+		$text = $post_temp[0]->post_content ; 
+		$array_regexp = $this->get_regexp() ;
+		$result1 = $this->split_regexp($text, $array_regexp) ;
 		
-		// Detect formatting issues
-		$result = $this->split_regexp($text, $array_regexp) ;
-		
+		// Detect formatting issues in the except / caption
+		$text = $post_temp[0]->post_excerpt ; 
+		$array_regexp = $this->get_regexp() ;
+		$result2 = $this->split_regexp($text, $array_regexp) ;
+
+		// Detect formatting issues in the title 
+		$text = $post_temp[0]->post_title ; 
+		$array_regexp = $this->get_regexp() ;
+		$result3 = $this->split_regexp($text, $array_regexp) ;
+
 		$res = $wpdb->get_results("SELECT id_post FROM ".$this->table_name." WHERE id_post='".$pid."'") ;
 		if (count($res)==0){
-			$wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$pid."', '".floor((count($result)-1)/2)."', NOW())") ;
+			$wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$pid."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', NOW())") ;
 		} else {
-			$wpdb->query("UPDATE ".$this->table_name." SET numerror='".floor((count($result)-1)/2)."', date_check=NOW() WHERE id_post='".$pid."'") ; 		
+			$wpdb->query("UPDATE ".$this->table_name." SET numerror='".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', date_check=NOW() WHERE id_post='".$pid."'") ; 		
 		}
-		
 		
 		$this->displayTable() ; 	
 		
@@ -1874,7 +2139,7 @@ class formatting_correcter extends pluginSedLex {
 		} else {
 			$pc = floor(100*($this->get_param('nb_post_to_check')-count($this->get_param('list_post_id_to_check')))/$this->get_param('nb_post_to_check')) ; 
 			
-			$pb = new progressBarAdmin(500, 20, $pc, "PROGRESS - ".($this->get_param('nb_post_to_check')-count($this->get_param('list_post_id_to_check')))." / ".$this->get_param('nb_post_to_check')) ; 
+			$pb = new SLFramework_Progressbar(500, 20, $pc, "PROGRESS - ".($this->get_param('nb_post_to_check')-count($this->get_param('list_post_id_to_check')))." / ".$this->get_param('nb_post_to_check')) ; 
 			echo "<br>" ; 
 			$pb->flush() ;	
 		}
@@ -1906,7 +2171,7 @@ class formatting_correcter extends pluginSedLex {
 	function displayTable() {
 		global $wpdb, $post ; 
 		$maxnb = 20 ; 
-		$table = new adminTable(0, $maxnb, true, true) ; 
+		$table = new SLFramework_Table(0, $maxnb, true, true) ; 
 		
 		$paged=1 ; 
 		
@@ -1920,27 +2185,15 @@ class formatting_correcter extends pluginSedLex {
 		if (count($res)==0) {
 			echo "<p style='font-weight:bold;color:#8F0000;'>".__('No entry is available to be displayed... please wait until the background process find an article with issue(s) or force the analysis of all articles with the below button.', $this->pluginID)."</p>"  ; 
 		} else {
-			
-			$args = array(
-				'numberposts'     => -1,
-				'post_type'       => explode(",",$this->get_param('type_page')),
-				'fields'        => 'ids',
-				'nopaging' 		=> true,
-				'post_status'     => 'publish' 
-			);
-			
-			$myQuery = new WP_Query( $args ); 
-
-
-			//Looping through the posts
-			$total = 0 ; 
-			while ( $myQuery->have_posts() ) {
-				$myQuery->the_post();
-				$total ++ ; 
+			$all_type = explode(",",$this->get_param('type_page')) ; 
+			$pt = "" ; 
+			foreach ($all_type as $at) {
+				if ($pt != "") {
+					$pt .= " OR " ; 
+				}
+				$pt .= "post_type = '".$at."'" ; 
 			}
-
-			// Reset Post Data
-			wp_reset_postdata();
+			$total = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->posts WHERE (".$pt.") AND (post_status='publish' OR post_status='inherit')" ) ;
 			
 			echo "<p>".sprintf(__('%s articles/posts have been tested on a total of %s possible articles/posts.', $this->pluginID),"<b>".count($res)."</b>", "<b>".$total."</b>")."</p>"  ; 
 			echo "<p>".__('To trigger a verification, you may either wait until the baground process verify all articles/posts, or you may force a verification with the button below.', $this->pluginID)."</p>"  ; 
@@ -1971,9 +2224,9 @@ class formatting_correcter extends pluginSedLex {
 
 		// We order the posts page according to the choice of the user
 		if ($table->current_orderdir()=="ASC") {
-			$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), true) ;  
+			$result = SLFramework_Utils::multicolumn_sort($result, $table->current_ordercolumn(), true) ;  
 		} else { 
-			$result = Utils::multicolumn_sort($result, $table->current_ordercolumn(), false) ;  
+			$result = SLFramework_Utils::multicolumn_sort($result, $table->current_ordercolumn(), false) ;  
 		}
 		
 		// We limit the result to the requested zone
