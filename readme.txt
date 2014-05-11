@@ -47,6 +47,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.1.3 = 
+* NEW : Simplify the h1, h2, h3, etc. header tags to remove unneeded data
+
 = 1.1.2 = 
 * NEW : Show that the link is an attachment if so 
 * NEW : add the Edit link in the tabs
@@ -85,4 +88,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:f4f8aef4112cfe1a1c835e71ea917873d5aff386
+InfoVersion:474f74ea7ddc0477fc96d7cdb285d137545dcfb6

@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.1.2
+Version: 1.1.3
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -297,9 +297,8 @@ class formatting_correcter extends pluginSedLex {
 			case 'remove_nbsp' : return false			; break ; 
 			case 'space_after_comma' : return false			; break ; 
 			case 'strange_accentuation' : return false			; break ; 
-			
-			
-			
+			case 'remove_param_in_title' : return false			; break ; 
+						
 			case 'shorten_normal'    : return true			; break ; 
 			
 			case 'advanced_CBE_PCT' : return false			; break ; 
@@ -1278,6 +1277,8 @@ class formatting_correcter extends pluginSedLex {
 				$params->add_param('space_after_comma', __('Add a space after a comma and remove it before:',  $this->pluginID)) ; 
 				$params->add_param('strange_accentuation', __('Correct the diacritics accentuated characters:',  $this->pluginID)) ; 
 				$params->add_comment(__("In UTF8, there is two ways for coding accentuated characters: the diatrics way is not very well supported by browsers for now and the accentuated characters may appears as two characters (a non-accentuated one and an accent character).",  $this->pluginID)) ; 
+				$params->add_param('remove_param_in_title', __('Remove all unneeded data in header tags:',  $this->pluginID)) ; 
+				$params->add_comment(sprintf(__("For instance %s will be converted into %s.",  $this->pluginID), "<code>&lt;h3 id='foo' style='bar'&gt;</code>", "<code>&lt;h3&gt;</code>")) ; 
 
 				$params->add_title_macroblock(__('Custom issues %s',  $this->pluginID), __('Add a new custom regexp for a custom issue',  $this->pluginID)) ; 
 				$params->add_param('regex_error', __('Custom regexp to detect a formatting issue:',  $this->pluginID)) ; 
@@ -1474,6 +1475,10 @@ class formatting_correcter extends pluginSedLex {
 		if ($this->get_param('french_punctuations')) {
 			$regexp_norm[] = array('found'=>"([^&!?:;,.%]) ([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Replace the breakable space by a non-breakable one?", $this->pluginID))  ; 
 			$regexp_norm[] = array('found'=>"([^&]{6}[^&!?:;,.%]{2})([!?:;%])(?!\/\/)(?=[^>\]]*(<|\[|$))", 'replace'=>'###1###&nbsp;###2###', 'message'=>__("Add a non-breakable space between the punction mark and the last word?", $this->pluginID))  ; 
+		}
+		
+		if ($this->get_param('remove_param_in_title')) {
+			$regexp_norm[] = array('found'=>"<h([0-9])([^>]+)>", 'replace'=>'<h###1###>', 'message'=>__("Keep the title header simple?", $this->pluginID))  ; 
 		}
 		
 		if ($this->get_param('strange_accentuation')) {
