@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.1.0
+Version: 1.1.1
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -369,30 +369,39 @@ class formatting_correcter extends pluginSedLex {
 		if (empty($post_temp)) {
 			return ; 
 		}
-
-		$id = $post_temp[0]->ID ; 
+		if (!isset($post_temp[0])) {
+			return ; 
+		}
+		
+		$id = $post_temp[0] ; 
+		
+		$post_temp = get_post($id) ; 
+		
+		if ($post_temp==null) {
+			return ; 
+		}
 
 		// Detect formatting issues in the content / description
-		$text = $post_temp[0]->post_content ; 
+		$text = $post_temp->post_content ; 
 		$array_regexp = $this->get_regexp() ;
 		$result1 = $this->split_regexp($text, $array_regexp) ;
 		
 		// Detect formatting issues in the except / caption
-		$text = $post_temp[0]->post_excerpt ; 
+		$text = $post_temp->post_excerpt ; 
 		$array_regexp = $this->get_regexp() ;
 		$result2 = $this->split_regexp($text, $array_regexp) ;
 
 		// Detect formatting issues in the title 
-		$text = $post_temp[0]->post_title ; 
+		$text = $post_temp->post_title ; 
 		$array_regexp = $this->get_regexp() ;
 		$result3 = $this->split_regexp($text, $array_regexp) ;
 		
-		$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($resul3)-1)/2))."', NOW())") ;
+		$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', NOW())") ;
 				
 		// we re-authorize a new request 
 		$this->set_param('last_request', time()) ; 
 		 
-		return $id."-".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($resul3)-1)/2)) ; 
+		return $id."-".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2)) ; 
 	}
 	
 	/** ====================================================================================================================================================

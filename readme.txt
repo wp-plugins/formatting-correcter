@@ -47,6 +47,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.1.1 = 
+* BUG : Object expected while it was an ID
+
 = 1.1.0 = 
 * NEW : Now attachment may be anaysed 
 * NEW : title and excerpt may also be anaysed
@@ -78,4 +81,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:a36d33e6e9bcd5809c6e8e15d1b623d59f7b1ccc
+InfoVersion:d3fc0f9e05ab0cefaac224f48ebd9bbc51775f5d
