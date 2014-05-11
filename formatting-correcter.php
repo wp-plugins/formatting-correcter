@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.1.1
+Version: 1.1.2
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -1584,6 +1584,9 @@ class formatting_correcter extends pluginSedLex {
 		} 
 		
 		$post_temp[0] = get_post($id) ; 
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
 		
 		// Detect formatting issues in the excerpt / caption
 		$text = $post_temp[0]->post_excerpt ; 
@@ -1667,6 +1670,11 @@ class formatting_correcter extends pluginSedLex {
 		} 
 		
 		$post_temp[0] = get_post($id) ; 
+		
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
+
 		
 		$toBeUpdated = false ; 
 		
@@ -1848,6 +1856,11 @@ class formatting_correcter extends pluginSedLex {
 		}
 		
 		$post_temp[0] = get_post($id) ; 
+		
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
+
 
 		$text = $post_temp[0]->post_content ; 
 		
@@ -1876,6 +1889,10 @@ class formatting_correcter extends pluginSedLex {
 		} 
 		
 		$post_temp[0] = get_post($id) ; 
+		
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
 
 		// Detect formatting issues in the excerpt / caption
 		$text = $post_temp[0]->post_excerpt ; 
@@ -1940,6 +1957,11 @@ class formatting_correcter extends pluginSedLex {
 		$text = stripslashes($_POST['text']) ; 
 		
 		$post_temp[0] = get_post($id) ; 
+		
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
+
 		
 		$array_regexp = $this->get_regexp() ; 
 		
@@ -2118,6 +2140,10 @@ class formatting_correcter extends pluginSedLex {
 		
 		$post_temp[0] = get_post($pid) ; 
 		
+		if ($post_temp[0]==null) {
+			die() ; 
+		}
+
 		// Detect formatting issues in the content / description
 		$text = $post_temp[0]->post_content ; 
 		$array_regexp = $this->get_regexp() ;
@@ -2247,7 +2273,12 @@ class formatting_correcter extends pluginSedLex {
 		if ($count!=0) {
 			foreach ($result as $r) {
 				$ligne++ ; 
-				$cel1 = new adminCell("<p><b><a href='".get_permalink($r[0])."'>".$r[1]."</a></b></p>") ; 	
+				$post_temp2 = get_post($r[0]) ; 
+				if ($post_temp2->post_type=="attachment") {
+					$cel1 = new adminCell("<p><b><a href='".wp_get_attachment_url($r[0])."'>".$r[1]."</a></b><img src='".plugin_dir_url("/").'/'.str_replace(basename( __FILE__),"",plugin_basename( __FILE__)).'img/attach.png'."'/> <span style='font-size:75%'>(<a href=\"".(get_edit_post_link($r[0]))."\">".__('Edit', $this->pluginID)."</a>)</span></p>") ;
+				} else {
+					$cel1 = new adminCell("<p><b><a href='".get_permalink($r[0])."'>".$r[1]."</a></b> <span style='font-size:75%'>(<a href=\"".(get_edit_post_link($r[0]))."\">".__('Edit', $this->pluginID)."</a>)</span></p>") ;
+				} 	
 				$cel1->add_action(__("View formatting issues", $this->pluginID), "viewFormattingIssue") ; 
 				$cel1->add_action(__("Reset", $this->pluginID), "resetFormattingIssue") ; 
 				$cel1->add_action(__("Accept all modifications", $this->pluginID), "acceptAllModificationProposed") ; 

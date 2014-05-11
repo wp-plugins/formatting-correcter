@@ -47,6 +47,10 @@ Have fun !
 
 == Changelog ==
 
+= 1.1.2 = 
+* NEW : Show that the link is an attachment if so 
+* NEW : add the Edit link in the tabs
+
 = 1.1.1 = 
 * BUG : Object expected while it was an ID
 
@@ -81,4 +85,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:d3fc0f9e05ab0cefaac224f48ebd9bbc51775f5d
+InfoVersion:f4f8aef4112cfe1a1c835e71ea917873d5aff386
