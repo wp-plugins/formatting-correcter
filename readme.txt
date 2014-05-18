@@ -47,6 +47,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.1.4 = 
+* BUG : Avoid duplicate entries
+
 = 1.1.3 = 
 * NEW : Simplify the h1, h2, h3, etc. header tags to remove unneeded data
 
@@ -88,4 +91,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:474f74ea7ddc0477fc96d7cdb285d137545dcfb6
+InfoVersion:bde5f1a47d80bf8577d05e8406cbeddc331aa4fa

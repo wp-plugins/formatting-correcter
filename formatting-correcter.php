@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.1.3
+Version: 1.1.4
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
@@ -395,7 +395,13 @@ class formatting_correcter extends pluginSedLex {
 		$array_regexp = $this->get_regexp() ;
 		$result3 = $this->split_regexp($text, $array_regexp) ;
 		
-		$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', NOW())") ;
+		$res = $wpdb->get_results("SELECT id_post FROM ".$this->table_name." WHERE id_post='".$id."'") ;
+		if (count($res)==0){
+			$res = $wpdb->query("INSERT INTO ".$this->table_name." (id_post,numerror, date_check) VALUES ('".$id."', '".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', NOW())") ;
+		} else {
+			$res = $wpdb->query("UPDATE ".$this->table_name." SET numerror='".(floor((count($result1)-1)/2)+floor((count($result2)-1)/2)+floor((count($result3)-1)/2))."', date_check=NOW() WHERE id_post='".$id."'") ; 		
+		}
+
 				
 		// we re-authorize a new request 
 		$this->set_param('last_request', time()) ; 
