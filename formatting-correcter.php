@@ -3,7 +3,7 @@
 Plugin Name: Formatting correcter
 Plugin Tag: tag
 Description: <p>The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. </p>
-Version: 1.1.4
+Version: 1.1.5
 Framework: SL_Framework
 Author: sedLex
 Author URI: http://www.sedlex.fr/
