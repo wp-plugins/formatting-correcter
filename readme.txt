@@ -6,8 +6,9 @@ Author URI: http://www.sedlex.fr/
 Plugin URI: http://wordpress.org/plugins/formatting-correcter/
 Tags: tag
 Requires at least: 3.0
-Tested up to: 3.9.1
+Tested up to: 4.2
 Stable tag: trunk
+License: GPLv3
 
 The plugin detects any formatting issues in your posts such as "double space" or any other issues that you may configure and proposes to correct them accordingly. 
 
@@ -46,6 +47,9 @@ Have fun !
 3. Parameters page
 
 == Changelog ==
+
+= 1.1.6 = 
+* NEW : Add icons
 
 = 1.1.5 = 
 * NEW : Imrpove the speed of the framework
@@ -94,4 +98,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:2824dfc52145be7720c36d3590aff1e112432e3f
+InfoVersion:ac44b4a887ae3b4093902908501efb3f66bff51b
