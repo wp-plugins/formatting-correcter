@@ -4,7 +4,7 @@ Author: sedLex
 Contributors: sedLex
 Author URI: http://www.sedlex.fr/
 Plugin URI: http://wordpress.org/plugins/formatting-correcter/
-Tags: tag
+Tags: formatting, typo, double space, correcter
 Requires at least: 3.0
 Tested up to: 4.2
 Stable tag: trunk
@@ -98,4 +98,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:ac44b4a887ae3b4093902908501efb3f66bff51b
+InfoVersion:960e65e4acc457065a025c1479831e1a0e2399f0
