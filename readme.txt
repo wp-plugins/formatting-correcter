@@ -48,6 +48,9 @@ Have fun !
 
 == Changelog ==
 
+= 1.1.7 = 
+* NEW : delete temp fles on desinstall
+
 = 1.1.6 = 
 * NEW : Add icons
 
@@ -98,4 +101,4 @@ Have fun !
 == Frequently Asked Questions ==
 
  
-InfoVersion:960e65e4acc457065a025c1479831e1a0e2399f0
+InfoVersion:edece4ee6ccf37dc5a38135b349cee2591aae9da
