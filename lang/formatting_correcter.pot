@@ -1,679 +1,679 @@
 Content-Transfer-Encoding: 8bit
 
-#: formatting-correcter.php:252
+#: formatting-correcter.php:266
 #@ formatting_correcter
 msgid "title"
 msgstr ""
 
-#: formatting-correcter.php:338
+#: formatting-correcter.php:352
 #@ formatting_correcter
 msgid "Only %s seconds since the last computation: please wait!"
 msgstr ""
 
-#: formatting-correcter.php:526
+#: formatting-correcter.php:540
 #@ formatting_correcter
 msgid "Remove the jsession for legifrance links?"
 msgstr ""
 
-#: formatting-correcter.php:541
-#: formatting-correcter.php:593
-#: formatting-correcter.php:609
-#: formatting-correcter.php:625
+#: formatting-correcter.php:555
+#: formatting-correcter.php:607
+#: formatting-correcter.php:623
+#: formatting-correcter.php:639
 #@ formatting_correcter
 msgid "Remove the htm extension?"
 msgstr ""
 
-#: formatting-correcter.php:581
+#: formatting-correcter.php:595
 #@ formatting_correcter
 msgid "Correct this EPC Guidelines name?"
 msgstr ""
 
-#: formatting-correcter.php:640
+#: formatting-correcter.php:654
 #@ formatting_correcter
 msgid "Change to 2013 EPC?"
 msgstr ""
 
-#: formatting-correcter.php:722
-#: formatting-correcter.php:795
-#: formatting-correcter.php:873
-#: formatting-correcter.php:946
+#: formatting-correcter.php:736
+#: formatting-correcter.php:809
+#: formatting-correcter.php:887
+#: formatting-correcter.php:960
 #@ formatting_correcter
 msgid "Correct this EPC name?"
 msgstr ""
 
-#: formatting-correcter.php:732
-#: formatting-correcter.php:883
-#: formatting-correcter.php:1010
-#: formatting-correcter.php:1136
+#: formatting-correcter.php:746
+#: formatting-correcter.php:897
+#: formatting-correcter.php:1024
+#: formatting-correcter.php:1150
 #@ formatting_correcter
 msgid "Delete this anchor as it does not match with the URL?"
 msgstr ""
 
-#: formatting-correcter.php:778
-#: formatting-correcter.php:929
-#: formatting-correcter.php:1036
-#: formatting-correcter.php:1162
+#: formatting-correcter.php:792
+#: formatting-correcter.php:943
+#: formatting-correcter.php:1050
+#: formatting-correcter.php:1176
 #@ formatting_correcter
 msgid "Add this anchor?"
 msgstr ""
 
-#: formatting-correcter.php:1000
-#: formatting-correcter.php:1087
-#: formatting-correcter.php:1126
+#: formatting-correcter.php:1014
+#: formatting-correcter.php:1101
+#: formatting-correcter.php:1140
 #@ formatting_correcter
 msgid "Correct this PCT name?"
 msgstr ""
 
-#: formatting-correcter.php:1053
+#: formatting-correcter.php:1067
 #@ formatting_correcter
 msgid "Correct this PCT article name?"
 msgstr ""
 
-#: formatting-correcter.php:1179
+#: formatting-correcter.php:1193
 #@ formatting_correcter
 msgid "Correct this PCT rules name?"
 msgstr ""
 
-#: formatting-correcter.php:1218
+#: formatting-correcter.php:1232
 #@ formatting_correcter
 msgid "All existing entries are deleted as you just update the params."
 msgstr ""
 
-#: formatting-correcter.php:1218
-#: formatting-correcter.php:1223
+#: formatting-correcter.php:1232
+#: formatting-correcter.php:1237
 #@ formatting_correcter
 msgid "Do not worry, the checking will restart as soon as possible."
 msgstr ""
 
-#: formatting-correcter.php:1223
+#: formatting-correcter.php:1237
 #@ formatting_correcter
 msgid "All existing entries are deleted as you just reset the params."
 msgstr ""
 
-#: formatting-correcter.php:1257
+#: formatting-correcter.php:1271
 #@ formatting_correcter
 msgid "Force analysis"
 msgstr ""
 
-#: formatting-correcter.php:1259
+#: formatting-correcter.php:1273
 #@ formatting_correcter
 msgid "Stop analysis"
 msgstr ""
 
-#: formatting-correcter.php:1263
+#: formatting-correcter.php:1277
 #@ formatting_correcter
 msgid "Formatting Issues"
 msgstr ""
 
-#: formatting-correcter.php:1267
+#: formatting-correcter.php:1281
 #@ formatting_correcter
 msgid "Typical formating issues"
 msgstr ""
 
-#: formatting-correcter.php:1268
+#: formatting-correcter.php:1282
 #@ formatting_correcter
 msgid "Double-space:"
 msgstr ""
 
-#: formatting-correcter.php:1269
+#: formatting-correcter.php:1283
 #@ formatting_correcter
 msgid "This option detects double space in your text"
 msgstr ""
 
-#: formatting-correcter.php:1270
+#: formatting-correcter.php:1284
 #@ formatting_correcter
 msgid "Incorrect quotes:"
 msgstr ""
 
-#: formatting-correcter.php:1271
+#: formatting-correcter.php:1285
 #@ formatting_correcter
 msgid "Replace %s with %s and %s with %s."
 msgstr ""
 
-#: formatting-correcter.php:1272
+#: formatting-correcter.php:1286
 #@ formatting_correcter
 msgid "French punctuation marks:"
 msgstr ""
 
-#: formatting-correcter.php:1273
+#: formatting-correcter.php:1287
 #@ formatting_correcter
 msgid "For instance there is unbreakable space before the following double punctuation marks %s."
 msgstr ""
 
-#: formatting-correcter.php:1274
+#: formatting-correcter.php:1288
 #@ formatting_correcter
 msgid "Add space after double quote:"
 msgstr ""
 
-#: formatting-correcter.php:1275
+#: formatting-correcter.php:1289
 #@ formatting_correcter
 msgid "This is to ease the transformation of %s into %s or %s (if applicable)."
 msgstr ""
 
-#: formatting-correcter.php:1276
+#: formatting-correcter.php:1290
 #@ formatting_correcter
 msgid "HTML code in your text:"
 msgstr ""
 
-#: formatting-correcter.php:1277
+#: formatting-correcter.php:1291
 #@ formatting_correcter
 msgid "This option remove the %s tag in the text."
 msgstr ""
 
-#: formatting-correcter.php:1278
+#: formatting-correcter.php:1292
 #@ formatting_correcter
 msgid "Move space when inside HTML tag:"
 msgstr ""
 
-#: formatting-correcter.php:1279
+#: formatting-correcter.php:1293
 #@ formatting_correcter
 msgid "This option move space just after opening tag out and move space just before closing tag out."
 msgstr ""
 
-#: formatting-correcter.php:1280
+#: formatting-correcter.php:1294
 #@ formatting_correcter
 msgid "Transform three successive points into ellipses:"
 msgstr ""
 
-#: formatting-correcter.php:1281
+#: formatting-correcter.php:1295
 #@ formatting_correcter
 msgid "Incorrect non-breaking space according French rules:"
 msgstr ""
 
-#: formatting-correcter.php:1282
+#: formatting-correcter.php:1296
 #@ formatting_correcter
 msgid "This option removes non breaking space that are not before punctuation marks."
 msgstr ""
 
-#: formatting-correcter.php:1283
+#: formatting-correcter.php:1297
 #@ formatting_correcter
 msgid "Add a space after a comma and remove it before:"
 msgstr ""
 
-#: formatting-correcter.php:1284
+#: formatting-correcter.php:1298
 #@ formatting_correcter
 msgid "Correct the diacritics accentuated characters:"
 msgstr ""
 
-#: formatting-correcter.php:1285
+#: formatting-correcter.php:1299
 #@ formatting_correcter
 msgid "In UTF8, there is two ways for coding accentuated characters: the diatrics way is not very well supported by browsers for now and the accentuated characters may appears as two characters (a non-accentuated one and an accent character)."
 msgstr ""
 
-#: formatting-correcter.php:1286
+#: formatting-correcter.php:1300
 #@ formatting_correcter
 msgid "Remove all unneeded data in header tags:"
 msgstr ""
 
-#: formatting-correcter.php:1287
+#: formatting-correcter.php:1301
 #@ formatting_correcter
 msgid "For instance %s will be converted into %s."
 msgstr ""
 
-#: formatting-correcter.php:1289
+#: formatting-correcter.php:1303
 #@ formatting_correcter
 msgid "Custom issues %s"
 msgstr ""
 
-#: formatting-correcter.php:1289
+#: formatting-correcter.php:1303
 #@ formatting_correcter
 msgid "Add a new custom regexp for a custom issue"
 msgstr ""
 
-#: formatting-correcter.php:1290
+#: formatting-correcter.php:1304
 #@ formatting_correcter
 msgid "Custom regexp to detect a formatting issue:"
 msgstr ""
 
-#: formatting-correcter.php:1291
+#: formatting-correcter.php:1305
 #@ formatting_correcter
 msgid "This regexp is used to detect formating issue in your posts"
 msgstr ""
 
-#: formatting-correcter.php:1292
+#: formatting-correcter.php:1306
 #@ formatting_correcter
 msgid "Custom regexp to correct it:"
 msgstr ""
 
-#: formatting-correcter.php:1293
+#: formatting-correcter.php:1307
 #@ formatting_correcter
 msgid "You could use %s or %s to use the content in parenthesis."
 msgstr ""
 
-#: formatting-correcter.php:1295
+#: formatting-correcter.php:1309
 #@ formatting_correcter
 msgid "Advanced parameter"
 msgstr ""
 
-#: formatting-correcter.php:1296
+#: formatting-correcter.php:1310
 #@ formatting_correcter
 msgid "Minimum interval bewteen two checks (in minutes):"
 msgstr ""
 
-#: formatting-correcter.php:1297
+#: formatting-correcter.php:1311
 #@ formatting_correcter
 msgid "Shorten article when displayed in the backend:"
 msgstr ""
 
-#: formatting-correcter.php:1298
+#: formatting-correcter.php:1312
 #@ formatting_correcter
 msgid "Types of page/post to be checked:"
 msgstr ""
 
-#: formatting-correcter.php:1299
+#: formatting-correcter.php:1313
 #@ formatting_correcter
 msgid "You can type for instance %s or %s."
 msgstr ""
 
-#: formatting-correcter.php:1300
+#: formatting-correcter.php:1314
 #@ formatting_correcter
 msgid "Display the number of issues in the left column:"
 msgstr ""
 
-#: formatting-correcter.php:1301
+#: formatting-correcter.php:1315
 #@ formatting_correcter
 msgid "If this is checked, display the total number of issues, if not, display only the number of posts with at least one issue:"
 msgstr ""
 
-#: formatting-correcter.php:1302
+#: formatting-correcter.php:1316
 #@ formatting_correcter
 msgid "When forced, how many posts is to be checked?"
 msgstr ""
 
-#: formatting-correcter.php:1303
+#: formatting-correcter.php:1317
 #@ formatting_correcter
 msgid "Advanced PCT-EPC link formatting link (normally, do not activate this option)"
 msgstr ""
 
-#: formatting-correcter.php:1304
+#: formatting-correcter.php:1318
 #@ formatting_correcter
 msgid "Detect issues on EPC guidelines links"
 msgstr ""
 
-#: formatting-correcter.php:1305
+#: formatting-correcter.php:1319
 #@ formatting_correcter
 msgid "Detect issues on EPC articles/rules links"
 msgstr ""
 
-#: formatting-correcter.php:1306
+#: formatting-correcter.php:1320
 #@ formatting_correcter
 msgid "Detect issues on PCT articles/rules links"
 msgstr ""
 
-#: formatting-correcter.php:1307
+#: formatting-correcter.php:1321
 #@ formatting_correcter
 msgid "Advanced Legifrance link formatting link (normally, do not activate this option)"
 msgstr ""
 
-#: formatting-correcter.php:1309
+#: formatting-correcter.php:1323
 #@ formatting_correcter
 msgid "Avoid creating a revision for each single modifications you validate:"
 msgstr ""
 
-#: formatting-correcter.php:1313
+#: formatting-correcter.php:1327
 #@ formatting_correcter
 msgid "Parameters"
 msgstr ""
 
-#: formatting-correcter.php:1317
+#: formatting-correcter.php:1331
 #@ formatting_correcter
 msgid "This plugin is designed to detect usual typographic issues and to propose corrections for these issues."
 msgstr ""
 
-#: formatting-correcter.php:1318
+#: formatting-correcter.php:1332
 #@ formatting_correcter
 msgid "Purpose of that plugin"
 msgstr ""
 
-#: formatting-correcter.php:1320
+#: formatting-correcter.php:1334
 #@ formatting_correcter
 msgid "The plugin proposes a number of option to identify the formatting issues."
 msgstr ""
 
-#: formatting-correcter.php:1321
+#: formatting-correcter.php:1335
 #@ formatting_correcter
 msgid "Just have a look in the configuration tab: it is quite self-explanatory...."
 msgstr ""
 
-#: formatting-correcter.php:1322
+#: formatting-correcter.php:1336
 #@ formatting_correcter
 msgid "You also may add you own regular expressions to identify custom issues"
 msgstr ""
 
-#: formatting-correcter.php:1323
+#: formatting-correcter.php:1337
 #@ formatting_correcter
 msgid "How to configure the plugin?"
 msgstr ""
 
-#: formatting-correcter.php:1325
+#: formatting-correcter.php:1339
 #@ formatting_correcter
 msgid "There is two different ways to look for formatting issue:"
 msgstr ""
 
-#: formatting-correcter.php:1327
+#: formatting-correcter.php:1341
 #@ formatting_correcter
 msgid "an automatic process (namely background process):"
 msgstr ""
 
-#: formatting-correcter.php:1329
+#: formatting-correcter.php:1343
 #@ formatting_correcter
 msgid "Every time a user visits a page of the frontside of your website, an unverified post/page is verified;"
 msgstr ""
 
-#: formatting-correcter.php:1330
+#: formatting-correcter.php:1344
 #@ formatting_correcter
 msgid "Note that if you have very few visits, a complete review of your articles may be quite long."
 msgstr ""
 
-#: formatting-correcter.php:1332
+#: formatting-correcter.php:1346
 #@ formatting_correcter
 msgid "a forced process:"
 msgstr ""
 
-#: formatting-correcter.php:1334
+#: formatting-correcter.php:1348
 #@ formatting_correcter
 msgid "The button that triggers this forced process may be found in the Formatting issues tab;"
 msgstr ""
 
-#: formatting-correcter.php:1335
+#: formatting-correcter.php:1349
 #@ formatting_correcter
 msgid "You have to stay on that page for processing all posts/pages: if you go on another page (or if you reload the page), the process will be stopped."
 msgstr ""
 
-#: formatting-correcter.php:1338
+#: formatting-correcter.php:1352
 #@ formatting_correcter
 msgid "How to backup the site?"
 msgstr ""
 
-#: formatting-correcter.php:1343
+#: formatting-correcter.php:1357
 #@ formatting_correcter
 msgid "How To"
 msgstr ""
 
-#: formatting-correcter.php:1351
+#: formatting-correcter.php:1365
 #@ formatting_correcter
 msgid "Manage translations"
 msgstr ""
 
-#: formatting-correcter.php:1358
+#: formatting-correcter.php:1372
 #@ formatting_correcter
 msgid "Give feedback"
 msgstr ""
 
-#: formatting-correcter.php:1366
+#: formatting-correcter.php:1380
 #@ formatting_correcter
 msgid "Other plugins"
 msgstr ""
 
-#: formatting-correcter.php:1443
+#: formatting-correcter.php:1457
 #@ formatting_correcter
 msgid "Add a space after this comma?"
 msgstr ""
 
-#: formatting-correcter.php:1444
+#: formatting-correcter.php:1458
 #@ formatting_correcter
 msgid "Remove space before this comma?"
 msgstr ""
 
-#: formatting-correcter.php:1448
+#: formatting-correcter.php:1462
 #@ formatting_correcter
 msgid "Add a space after this double quote?"
 msgstr ""
 
-#: formatting-correcter.php:1452
+#: formatting-correcter.php:1466
 #@ formatting_correcter
 msgid "Transform this ellipse?"
 msgstr ""
 
-#: formatting-correcter.php:1456
+#: formatting-correcter.php:1470
 #@ formatting_correcter
 msgid "Remove this double space?"
 msgstr ""
 
-#: formatting-correcter.php:1460
+#: formatting-correcter.php:1474
 #@ formatting_correcter
 msgid "Remove this incorrect non-breaking space?"
 msgstr ""
 
-#: formatting-correcter.php:1464
-#: formatting-correcter.php:1465
+#: formatting-correcter.php:1478
+#: formatting-correcter.php:1479
 #@ formatting_correcter
 msgid "Replace this double non-standard quote?"
 msgstr ""
 
-#: formatting-correcter.php:1466
+#: formatting-correcter.php:1480
 #@ formatting_correcter
 msgid "Replace this single non-standard quote?"
 msgstr ""
 
-#: formatting-correcter.php:1470
+#: formatting-correcter.php:1484
 #@ formatting_correcter
 msgid "Move the space before the opening HTML tag?"
 msgstr ""
 
-#: formatting-correcter.php:1471
+#: formatting-correcter.php:1485
 #@ formatting_correcter
 msgid "Move the space after the closing HTML tag?"
 msgstr ""
 
-#: formatting-correcter.php:1475
-#: formatting-correcter.php:1476
-#: formatting-correcter.php:1477
-#: formatting-correcter.php:1478
+#: formatting-correcter.php:1489
+#: formatting-correcter.php:1490
+#: formatting-correcter.php:1491
+#: formatting-correcter.php:1492
 #@ formatting_correcter
 msgid "Remove the HTML tag?"
 msgstr ""
 
-#: formatting-correcter.php:1482
+#: formatting-correcter.php:1496
 #@ formatting_correcter
 msgid "Replace the breakable space by a non-breakable one?"
 msgstr ""
 
-#: formatting-correcter.php:1483
+#: formatting-correcter.php:1497
 #@ formatting_correcter
 msgid "Add a non-breakable space between the punction mark and the last word?"
 msgstr ""
 
-#: formatting-correcter.php:1487
+#: formatting-correcter.php:1501
 #@ formatting_correcter
 msgid "Keep the title header simple?"
 msgstr ""
 
-#: formatting-correcter.php:1492
-#: formatting-correcter.php:1493
-#: formatting-correcter.php:1494
-#: formatting-correcter.php:1495
-#: formatting-correcter.php:1496
-#: formatting-correcter.php:1498
-#: formatting-correcter.php:1499
-#: formatting-correcter.php:1500
-#: formatting-correcter.php:1501
-#: formatting-correcter.php:1502
-#: formatting-correcter.php:1504
 #: formatting-correcter.php:1506
+#: formatting-correcter.php:1507
 #: formatting-correcter.php:1508
 #: formatting-correcter.php:1509
 #: formatting-correcter.php:1510
-#: formatting-correcter.php:1511
+#: formatting-correcter.php:1512
 #: formatting-correcter.php:1513
 #: formatting-correcter.php:1514
 #: formatting-correcter.php:1515
 #: formatting-correcter.php:1516
 #: formatting-correcter.php:1518
-#: formatting-correcter.php:1519
 #: formatting-correcter.php:1520
-#: formatting-correcter.php:1521
+#: formatting-correcter.php:1522
 #: formatting-correcter.php:1523
 #: formatting-correcter.php:1524
 #: formatting-correcter.php:1525
-#: formatting-correcter.php:1526
+#: formatting-correcter.php:1527
 #: formatting-correcter.php:1528
+#: formatting-correcter.php:1529
 #: formatting-correcter.php:1530
 #: formatting-correcter.php:1532
 #: formatting-correcter.php:1533
 #: formatting-correcter.php:1534
 #: formatting-correcter.php:1535
-#: formatting-correcter.php:1536
+#: formatting-correcter.php:1537
 #: formatting-correcter.php:1538
 #: formatting-correcter.php:1539
 #: formatting-correcter.php:1540
-#: formatting-correcter.php:1541
 #: formatting-correcter.php:1542
 #: formatting-correcter.php:1544
 #: formatting-correcter.php:1546
+#: formatting-correcter.php:1547
 #: formatting-correcter.php:1548
 #: formatting-correcter.php:1549
 #: formatting-correcter.php:1550
-#: formatting-correcter.php:1551
+#: formatting-correcter.php:1552
 #: formatting-correcter.php:1553
 #: formatting-correcter.php:1554
 #: formatting-correcter.php:1555
 #: formatting-correcter.php:1556
 #: formatting-correcter.php:1558
-#: formatting-correcter.php:1559
-#: formatting-correcter.php:1561
+#: formatting-correcter.php:1560
 #: formatting-correcter.php:1562
+#: formatting-correcter.php:1563
 #: formatting-correcter.php:1564
-#: formatting-correcter.php:1566
+#: formatting-correcter.php:1565
+#: formatting-correcter.php:1567
+#: formatting-correcter.php:1568
+#: formatting-correcter.php:1569
+#: formatting-correcter.php:1570
+#: formatting-correcter.php:1572
+#: formatting-correcter.php:1573
+#: formatting-correcter.php:1575
+#: formatting-correcter.php:1576
+#: formatting-correcter.php:1578
+#: formatting-correcter.php:1580
 #@ formatting_correcter
 msgid "Replace the diacritic accentuated characters with a correct one?"
 msgstr ""
 
-#: formatting-correcter.php:1574
+#: formatting-correcter.php:1588
 #@ formatting_correcter
 msgid "Replace this formatting based on custom regexp %s ?"
 msgstr ""
 
-#: formatting-correcter.php:1610
-#: formatting-correcter.php:1816
-#: formatting-correcter.php:1916
-#: formatting-correcter.php:1993
+#: formatting-correcter.php:1624
+#: formatting-correcter.php:1830
+#: formatting-correcter.php:1930
+#: formatting-correcter.php:2007
 #@ formatting_correcter
 msgid "Formating issue for the excerpt / caption"
 msgstr ""
 
-#: formatting-correcter.php:1620
-#: formatting-correcter.php:1826
-#: formatting-correcter.php:1926
-#: formatting-correcter.php:2003
+#: formatting-correcter.php:1634
+#: formatting-correcter.php:1840
+#: formatting-correcter.php:1940
+#: formatting-correcter.php:2017
 #@ formatting_correcter
 msgid "Formating issue for the title"
 msgstr ""
 
-#: formatting-correcter.php:1630
-#: formatting-correcter.php:1836
-#: formatting-correcter.php:1936
-#: formatting-correcter.php:2013
+#: formatting-correcter.php:1644
+#: formatting-correcter.php:1850
+#: formatting-correcter.php:1950
+#: formatting-correcter.php:2027
 #@ formatting_correcter
 msgid "Formating issue for the content / description"
 msgstr ""
 
-#: formatting-correcter.php:1634
-#: formatting-correcter.php:1840
-#: formatting-correcter.php:1940
-#: formatting-correcter.php:2017
+#: formatting-correcter.php:1648
+#: formatting-correcter.php:1854
+#: formatting-correcter.php:1954
+#: formatting-correcter.php:2031
 #@ formatting_correcter
 msgid "Accept all propositions"
 msgstr ""
 
-#: formatting-correcter.php:1634
-#: formatting-correcter.php:1840
-#: formatting-correcter.php:1940
-#: formatting-correcter.php:2017
+#: formatting-correcter.php:1648
+#: formatting-correcter.php:1854
+#: formatting-correcter.php:1954
+#: formatting-correcter.php:2031
 #@ formatting_correcter
 msgid "Sure to modify all issues with the proposed modifications?"
 msgstr ""
 
-#: formatting-correcter.php:1635
-#: formatting-correcter.php:1841
-#: formatting-correcter.php:1941
-#: formatting-correcter.php:2018
+#: formatting-correcter.php:1649
+#: formatting-correcter.php:1855
+#: formatting-correcter.php:1955
+#: formatting-correcter.php:2032
 #@ formatting_correcter
 msgid "Edit the text"
 msgstr ""
 
-#: formatting-correcter.php:1645
-#: formatting-correcter.php:1846
-#: formatting-correcter.php:1946
-#: formatting-correcter.php:2023
+#: formatting-correcter.php:1659
+#: formatting-correcter.php:1860
+#: formatting-correcter.php:1960
+#: formatting-correcter.php:2037
 #@ formatting_correcter
 msgid "Click on formatting issue to validate the replacement or use the button at the end of the document to validate all the replacements in one click."
 msgstr ""
 
-#: formatting-correcter.php:1650
+#: formatting-correcter.php:1664
 #@ formatting_correcter
 msgid "View the formatting issue for %s"
 msgstr ""
 
-#: formatting-correcter.php:1709
-#: formatting-correcter.php:1743
-#: formatting-correcter.php:1777
+#: formatting-correcter.php:1723
+#: formatting-correcter.php:1757
+#: formatting-correcter.php:1791
 #@ formatting_correcter
 msgid "ERROR: There is a problem as the %s delimiter should be at the %s character and is instead at the %s character."
 msgstr ""
 
-#: formatting-correcter.php:1882
+#: formatting-correcter.php:1896
 #@ formatting_correcter
 msgid "Save"
 msgstr ""
 
-#: formatting-correcter.php:1883
+#: formatting-correcter.php:1897
 #@ formatting_correcter
 msgid "Cancel"
 msgstr ""
 
-#: formatting-correcter.php:2232
+#: formatting-correcter.php:2246
 #@ formatting_correcter
 msgid "No entry is available to be displayed... please wait until the background process find an article with issue(s) or force the analysis of all articles with the below button."
 msgstr ""
 
-#: formatting-correcter.php:2244
+#: formatting-correcter.php:2258
 #@ formatting_correcter
 msgid "%s articles/posts have been tested on a total of %s possible articles/posts."
 msgstr ""
 
-#: formatting-correcter.php:2245
+#: formatting-correcter.php:2259
 #@ formatting_correcter
 msgid "To trigger a verification, you may either wait until the baground process verify all articles/posts, or you may force a verification with the button below."
 msgstr ""
 
-#: formatting-correcter.php:2269
+#: formatting-correcter.php:2283
 #@ formatting_correcter
 msgid "Title of your articles"
 msgstr ""
 
-#: formatting-correcter.php:2269
+#: formatting-correcter.php:2283
 #@ formatting_correcter
 msgid "Num of formatting issues"
 msgstr ""
 
-#: formatting-correcter.php:2269
+#: formatting-correcter.php:2283
 #@ formatting_correcter
 msgid "Date of verification"
 msgstr ""
 
-#: formatting-correcter.php:2289
-#: formatting-correcter.php:2291
+#: formatting-correcter.php:2303
+#: formatting-correcter.php:2305
 #@ formatting_correcter
 msgid "Edit"
 msgstr ""
 
-#: formatting-correcter.php:2293
+#: formatting-correcter.php:2307
 #@ formatting_correcter
 msgid "View formatting issues"
 msgstr ""
 
-#: formatting-correcter.php:2294
+#: formatting-correcter.php:2308
 #@ formatting_correcter
 msgid "Reset"
 msgstr ""
 
-#: formatting-correcter.php:2295
+#: formatting-correcter.php:2309
 #@ formatting_correcter
 msgid "Accept all modifications"
 msgstr ""
 
-#: formatting-correcter.php:2304
+#: formatting-correcter.php:2318
 #@ formatting_correcter
 msgid "Nothing to display for now ..."
 msgstr ""
